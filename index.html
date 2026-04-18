@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>3D Открытка | С Днём Рождения, Наташа</title>
+    <style>
+        :root {
+            --card-width: 400px;
+            --card-height: 550px;
+            --duration: 1.5s;
+        }
+
+        * {
+            -webkit-tap-highlight-color: transparent;
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(145deg, #1e2a36 0%, #2c3e50 100%);
+            font-family: 'Georgia', serif;
+            overflow: hidden;
+            perspective: 2000px;
+        }
+
+        .scene {
+            position: relative;
+            width: var(--card-width);
+            height: var(--card-height);
+            transform-style: preserve-3d;
+            flex-shrink: 0;
+            transition: all 0.3s ease;
+        }
+
+        .card {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            transition: transform var(--duration) cubic-bezier(0.25, 1, 0.5, 1);
+            cursor: pointer;
+        }
+
+        /* --- ЗАДНИЙ ПЛАН (Правая страница с фото) --- */
+        .back-page {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 4px 12px 12px 4px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            z-index: 1;
+            overflow: hidden;
+            background-color: #2c3e50;
+        }
+
+        .back-page img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+            display: block;
+        }
+
+
+        .back-page::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.1);
+            border-radius: 4px 12px 12px 4px;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .sound-btn {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            z-index: 20;
+            background: rgba(0,0,0,0.65);
+            backdrop-filter: blur(4px);
+            border: none;
+            border-radius: 40px;
+            width: 44px;
+            height: 44px;
+            cursor: pointer;
+            font-size: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            transition: transform 0.2s, background 0.2s;
+            color: #fff;
+        }
+
+        .sound-btn:active {
+            transform: scale(0.92);
+        }
+
+        /* --- ПЕРЕДНЯЯ ЧАСТЬ (Обложка + Левая страница) --- */
+        .front-assembly {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transform-origin: left center;
+            transform-style: preserve-3d;
+            transition: transform var(--duration) cubic-bezier(0.25, 1, 0.5, 1);
+            z-index: 10;
+            border-radius: 4px 12px 12px 4px;
+        }
+
+        /* ОБЛОЖКА С ЦЕНТРИРОВАННЫМ ИЗОБРАЖЕНИЕМ */
+        .cover-front {
+            position: absolute;
+            inset: 0;
+            backface-visibility: hidden;
+            background-image: url('img/3_4.jpg');
+            background-size: cover;
+            background-position: center center;
+            background-repeat: no-repeat;
+            background-color: #6a1b1b;
+            
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            align-items: center;
+            border: 2px solid #b5651e;
+            box-shadow: inset 10px 0 20px rgba(0,0,0,0.5), 5px 5px 15px rgba(0,0,0,0.4);
+            border-radius: 4px 12px 12px 4px;
+        }
+        
+        .cover-front::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 110px;
+            background: linear-gradient(to top, rgba(0,0,0,0.4), transparent);
+            pointer-events: none;
+            border-radius: 0 0 12px 4px;
+        }
+
+        .cover-back {
+            position: absolute;
+            inset: 0;
+            backface-visibility: hidden;
+            transform: rotateY(180deg);
+            background: #fffef7;
+            padding: 20px 25px;
+            box-sizing: border-box;
+            flex-direction: column;
+            justify-content: center;
+            border: 2px solid #e9dbc3;
+            box-shadow: inset -10px 0 20px rgba(0,0,0,0.05);
+            border-radius: 12px 4px 4px 12px;
+            overflow-y: auto;
+        }
+
+        .cover-back::-webkit-scrollbar {
+            width: 5px;
+        }
+        .cover-back::-webkit-scrollbar-track {
+            background: #f0e8da;
+            border-radius: 10px;
+        }
+        .cover-back::-webkit-scrollbar-thumb {
+            background: #b57c48;
+            border-radius: 10px;
+        }
+
+        .greeting-text {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            font-size: 18px;
+            color: #2c2418;
+            line-height: 1.55;
+            margin: 0;
+            text-align: left;
+            word-break: break-word;
+        }
+
+        .btn-open {
+            background: linear-gradient(135deg, #ffb347, #ff8c1a);
+            color: #3b2a1f;
+            border: none;
+            padding: 14px 28px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 60px;
+            cursor: pointer;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+            transition: transform 0.2s, box-shadow 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 35px;
+            z-index: 5;
+            font-family: inherit;
+        }
+
+        .btn-open:active {
+            transform: scale(0.94);
+        }
+
+        /* --- ОТКРЫТОЕ СОСТОЯНИЕ --- */
+        .card.is-open .front-assembly {
+            transform: rotateY(-180deg);
+            z-index: 5;
+        }
+
+        /* ===========================================
+           КОМПЬЮТЕРЫ (ВСЕГДА КНИЖНАЯ ОРИЕНТАЦИЯ)
+           =========================================== */
+        
+        @media (min-width: 769px) {
+            :root {
+                --card-width: 420px;
+                --card-height: 580px;
+            }
+            
+            body {
+                padding: 30px;
+            }
+            
+            .cover-front {
+                background-size: cover;
+                background-position: center center;
+            }
+            
+            .btn-open {
+                padding: 16px 32px;
+                font-size: 19px;
+                margin-bottom: 40px;
+            }
+            
+            .greeting-text {
+                font-size: 18px;
+                line-height: 1.6;
+            }
+            
+            .cover-back {
+                padding: 25px 30px;
+            }
+
+            .card.is-open {
+                transform: translateX(50%);
+            }
+        }
+
+        /* ===========================================
+           МОБИЛЬНЫЕ - ВЕРТИКАЛЬНАЯ ОРИЕНТАЦИЯ (КНИЖНАЯ)
+           =========================================== */
+        
+        @media (max-width: 768px) and (orientation: portrait) {
+            :root {
+                --card-width: 340px;
+                --card-height: 500px;
+            }
+            
+            body {
+                padding: 15px;
+            }
+            
+            .btn-open {
+                padding: 12px 26px;
+                font-size: 16px;
+                margin-bottom: 30px;
+            }
+            
+            .greeting-text {
+                font-size: 16px;
+            }
+            
+            .cover-back {
+                padding: 20px 20px;
+            }
+            
+            .sound-btn {
+                width: 42px;
+                height: 42px;
+                font-size: 20px;
+            }
+
+            .card.is-open {
+                transform: translateX(50%);
+            }
+        }
+        
+        @media (max-width: 480px) and (orientation: portrait) {
+            :root {
+                --card-width: 300px;
+                --card-height: 460px;
+            }
+            
+            body {
+                padding: 12px;
+            }
+            
+            .scene {
+                width: 100%;
+                max-width: var(--card-width);
+                height: auto;
+                aspect-ratio: 300 / 460;
+            }
+            
+            .card {
+                height: 100%;
+            }
+            
+            .btn-open {
+                padding: 10px 24px;
+                font-size: 15px;
+                margin-bottom: 28px;
+            }
+            
+            .greeting-text {
+                font-size: 15px;
+                line-height: 1.5;
+            }
+            
+            .cover-back {
+                padding: 18px 16px;
+            }
+            
+            .sound-btn {
+                width: 38px;
+                height: 38px;
+                font-size: 18px;
+            }
+
+            .card.is-open {
+                transform: translateX(50%);
+            }
+        }
+        
+        /* ===========================================
+           МОБИЛЬНЫЕ - ГОРИЗОНТАЛЬНАЯ ОРИЕНТАЦИЯ (АЛЬБОМНАЯ)
+           =========================================== */
+        
+        @media (max-width: 900px) and (orientation: landscape) {
+            :root {
+                --card-width: 380px;
+                --card-height: 260px;
+            }
+            
+            body {
+                padding: 10px;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            .scene {
+                width: var(--card-width);
+                height: var(--card-height);
+            }
+
+            /* Меняем background на img с object-fit */
+            .back-page {
+                background: none;
+
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            .back-page img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                object-position: center;
+                display: block;
+            }
+
+            
+            .cover-front {
+                background-size: cover;
+                background-position: center center;
+            }
+            
+            .btn-open {
+                padding: 8px 18px;
+                font-size: 13px;
+                margin-bottom: 18px;
+            }
+            
+            .greeting-text {
+                font-size: 11px;
+                line-height: 1.4;
+            }
+            
+            .cover-back {
+                padding: 10px 14px;
+            }
+            
+            .sound-btn {
+                width: 32px;
+                height: 32px;
+                font-size: 16px;
+                top: 6px;
+                right: 6px;
+            }
+            
+            .card.is-open {
+                transform: translateX(50%);
+            }
+        }
+        
+        /* Маленькие телефоны в ландшафте */
+        @media (max-width: 650px) and (orientation: landscape) {
+            :root {
+                --card-width: 340px;
+                --card-height: 230px;
+            }
+            
+            .greeting-text {
+                font-size: 10px;
+                line-height: 1.35;
+            }
+            
+            .btn-open {
+                padding: 6px 16px;
+                font-size: 12px;
+                margin-bottom: 15px;
+            }
+            
+            .cover-back {
+                padding: 8px 12px;
+            }
+        }
+        
+        /* Планшеты в ландшафте */
+        @media (min-width: 768px) and (max-width: 1024px) and (orientation: landscape) {
+            :root {
+                --card-width: 420px;
+                --card-height: 300px;
+            }
+            
+            body {
+                padding: 20px;
+            }
+            
+            .greeting-text {
+                font-size: 13px;
+                line-height: 1.45;
+            }
+            
+            .btn-open {
+                padding: 10px 22px;
+                font-size: 14px;
+                margin-bottom: 22px;
+            }
+            
+            .cover-back {
+                padding: 15px 18px;
+            }
+
+            
+            .gif {
+                width: 100%;
+                height: 100%;
+
+            }
+            
+            .card.is-open {
+                transform: translateX(50%);
+            }
+        }
+
+        /* Предотвращение прокрутки во время анимации */
+        body.no-scroll {
+            overflow: hidden;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+
+    <audio id="bg-music" loop preload="auto">
+        <source src="audio/Irina_Allegrova_-_S_dnjom_rozhdeniya_62687889_[cut_26sec].mp3" type="audio/mpeg">
+    </audio>
+
+    <div class="scene">
+        <div class="card" id="card">
+            
+            <div class="back-page">
+                <img class="gif" src="video/gif_3.gif" alt="Поздравление">
+                <button class="sound-btn" id="mute-btn" title="Вкл/Выкл звук">🔊</button>
+            </div>
+
+            <div class="front-assembly" id="front-assembly">
+                
+                <div class="cover-front">
+                    <button class="btn-open" id="open-btn">✨ Открыть ✨</button> 
+                </div>
+
+                <div class="cover-back">
+                    <p class="greeting-text">
+                        Наташа, от всей души поздравляю тебя с Днём Рождения!<br><br>
+                        Этот день – особенный, наполненный светом, теплом и самыми искренними пожеланиями. 
+                        Пусть он станет для тебя ярким началом нового, ещё более прекрасного года твоей жизни, 
+                        полного счастливых моментов, удивительных открытий и головокружительных успехов. <br><br>
+
+                        Желаю тебе безграничного счастья, того, которое разливается внутри, согревая душу 
+                        и даря ощущение полноты жизни. Пусть каждый твой день будет озарён лучами радости, 
+                        пусть улыбка никогда не сходит с твоего лица, а глаза сияют от восторга. <br><br>
+
+                        Крепкого здоровья тебе, чтобы сил и энергии хватало на все твои начинания, 
+                        мечты и грандиозные планы. Пусть никакие невзгоды не омрачают твой путь, 
+                        а каждый вызов лишь закаляет тебя и делает сильнее. <br><br>
+
+                        Любви тебе – взаимной, глубокой и всепоглощающей. Пусть рядом всегда будут те, кто ценит, 
+                        поддерживает и бережёт тебя, кто готов разделить с тобой и радость, и печаль. <br><br>
+
+                        Наташа, желаю тебе реализации всех твоих самых заветных желаний. 
+                        Пусть все цели, которые ты ставишь перед собой, будут достигнуты, 
+                        а каждый шаг на этом пути будет уверенным и приносящим удовлетворение. <br><br>
+
+                        Пусть этот год подарит тебе множество приятных сюрпризов, незабываемых путешествий 
+                        и встреч с интересными людьми. Желаю тебе гармонии в душе, вдохновения 
+                        и благополучия во всех сферах жизни.
+
+                        <br><br>
+                        С Днём Рождения, дорогая Наташа! Пусть этот праздник будет таким же прекрасным и неповторимым, как ты сама!
+                    </p>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const card = document.getElementById('card');
+            const openBtn = document.getElementById('open-btn');
+            const audio = document.getElementById('bg-music');
+            const muteBtn = document.getElementById('mute-btn');
+            const frontAssembly = document.getElementById('front-assembly');
+            
+            let isOpen = false;
+            let isMuted = false;
+
+            // Функция расчета смещения для открытой открытки
+            const calculateOffset = () => {
+                if (!card) return 180;
+                const cardWidth = card.offsetWidth;
+                const screenWidth = window.innerWidth;
+                const padding = 10;
+                
+                // Базовое смещение - половина ширины карточки
+                let offset = cardWidth / 2;
+                
+                // Проверяем, не выходит ли открытка за правый край
+                const maxOffset = screenWidth - cardWidth - padding;
+                if (offset > maxOffset && maxOffset > 20) {
+                    offset = maxOffset;
+                }
+                
+                return Math.max(offset, 10);
+            };
+
+            // Применение трансформации для открытой открытки
+            const applyOpenTransform = () => {
+                if (isOpen) {
+                    const offset = calculateOffset();
+                    card.style.transform = `translateX(${offset}px)`;
+                }
+            };
+
+            // Воспроизведение музыки
+            const playMusic = () => {
+                if (!audio || isMuted) return;
+                audio.volume = 0.5;
+                const playPromise = audio.play();
+                if (playPromise !== undefined) {
+                    playPromise.catch(() => {
+                        const resumeAudio = () => {
+                            if (!isMuted && isOpen) {
+                                audio.play().catch(() => {});
+                            }
+                            document.removeEventListener('click', resumeAudio);
+                            document.removeEventListener('touchstart', resumeAudio);
+                        };
+                        document.addEventListener('click', resumeAudio, { once: true });
+                        document.addEventListener('touchstart', resumeAudio, { once: true });
+                    });
+                }
+            };
+
+            // Открытие открытки
+            const openCard = () => {
+                if (isOpen) return;
+                isOpen = true;
+
+                document.body.classList.add('no-scroll');
+                card.classList.add('is-open');
+                
+                setTimeout(() => {
+                    applyOpenTransform();
+                }, 10);
+                
+                if (!isMuted) {
+                    playMusic();
+                }
+                
+                setTimeout(() => {
+                    document.body.classList.remove('no-scroll');
+                }, 1600);
+            };
+
+            // Обработчики событий
+            if (openBtn) {
+                openBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    openCard();
+                });
+            }
+            
+            if (frontAssembly) {
+                frontAssembly.addEventListener('click', (e) => {
+                    if (e.target === openBtn || openBtn?.contains(e.target)) return;
+                    if (!isOpen) openCard();
+                });
+            }
+            
+            if (muteBtn) {
+                muteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (!audio) return;
+                    if (isMuted) {
+                        audio.muted = false;
+                        muteBtn.textContent = '🔊';
+                        isMuted = false;
+                        if (isOpen && audio.paused) {
+                            audio.play().catch(() => {});
+                        }
+                    } else {
+                        audio.muted = true;
+                        muteBtn.textContent = '🔇';
+                        isMuted = true;
+                    }
+                });
+            }
+            
+            // Обработка изменения размера, ориентации и поворота
+            let resizeTimer;
+            const handleResizeAndOrientation = () => {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(() => {
+                    if (isOpen) {
+                        applyOpenTransform();
+                    }
+                }, 150);
+            };
+            
+            window.addEventListener('resize', handleResizeAndOrientation);
+            window.addEventListener('orientationchange', () => {
+                setTimeout(() => {
+                    if (isOpen) {
+                        applyOpenTransform();
+                    }
+                }, 100);
+            });
+            
+            // Проверка наличия изображения обложки
+            const coverFront = document.querySelector('.cover-front');
+            if (coverFront) {
+                const testImg = new Image();
+                testImg.onerror = () => {
+                    coverFront.style.backgroundImage = 'linear-gradient(135deg, #8b2c2c, #5e1919)';
+                };
+                testImg.src = 'img/3_4.jpg';
+            }
+            
+            // Инициализация аудио
+            if (audio) {
+                audio.load();
+                audio.muted = false;
+            }
+        });
+    </script>
+</body>
+</html>
