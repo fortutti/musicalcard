@@ -27,56 +27,9 @@
             font-family: 'Georgia', serif;
             overflow: hidden;
             perspective: 2000px;
-            transition: background 0.3s;
         }
 
-        /* Режим "fullscreen" (эмуляция) */
-        body.fake-fullscreen {
-            background: #000;
-            overflow: hidden;
-            position: fixed;
-            width: 100%;
-            height: 100%;
-        }
-        body.fake-fullscreen .scene {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            z-index: 1000;
-            transform: none !important;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        body.fake-fullscreen .card.is-open {
-            transform: translateX(calc(50% - 15px));
-        }
-        /* Кнопка закрытия fullscreen */
-        .close-fullscreen {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 2000;
-            background: rgba(0,0,0,0.7);
-            color: white;
-            font-size: 32px;
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            backdrop-filter: blur(5px);
-            font-family: sans-serif;
-            border: 1px solid rgba(255,255,255,0.3);
-        }
-        body.fake-fullscreen .close-fullscreen {
-            display: flex;
-        }
-
+        /* Обычный режим (как было, только убран fake-fullscreen) */
         .scene {
             position: relative;
             width: var(--card-width);
@@ -265,7 +218,71 @@
             display: none;
         }
 
-        /* ========== Адаптив для компьютеров ========== */
+        /* ===== ПОЛНОЭКРАННЫЙ ОВЕРЛЕЙ (как в video.html) ===== */
+        .fullscreen-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            z-index: 9999;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .fullscreen-overlay.active {
+            display: flex;
+        }
+
+        .fullscreen-overlay .close-fullscreen {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 48px;
+            height: 48px;
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 36px;
+            font-family: sans-serif;
+            cursor: pointer;
+            z-index: 10001;
+            border: 1px solid rgba(255,255,255,0.4);
+            transition: 0.2s;
+        }
+
+        .fullscreen-overlay .close-fullscreen:hover {
+            background: rgba(255,255,255,0.4);
+            transform: scale(1.05);
+        }
+
+        /* Контейнер для открытки внутри оверлея */
+        .fullscreen-scene {
+            position: relative;
+            width: 90vw;
+            height: auto;
+            max-width: 90vh;
+            aspect-ratio: 400 / 550;
+            cursor: default;
+        }
+
+        /* Адаптация под ландшафт */
+        @media (orientation: landscape) {
+            .fullscreen-scene {
+                width: auto;
+                height: 90vh;
+                max-width: 90vw;
+            }
+        }
+
+        /* Компьютеры (не трогаем) */
         @media (min-width: 769px) {
             :root {
                 --card-width: 420px;
@@ -289,6 +306,11 @@
             .card.is-open {
                 transform: translateX(50%);
             }
+            .fullscreen-scene {
+                width: auto;
+                height: 90vh;
+                max-width: 90vw;
+            }
         }
 
         body.no-scroll {
@@ -305,10 +327,8 @@
         <source src="audio/Irina_Allegrova_-_S_dnjom_rozhdeniya_62687889_[cut_26sec].mp3" type="audio/mpeg">
     </audio>
 
-    <!-- Кнопка закрытия полноэкранного режима -->
-    <div class="close-fullscreen" id="closeFullscreenBtn">✕</div>
-
-    <div class="scene">
+    <!-- Обычная открытка (в режиме предпросмотра) -->
+    <div class="scene" id="mainScene">
         <div class="card" id="card">
             <div class="back-page">
                 <img class="gif" src="video/gif_3.gif" alt="Поздравление">
@@ -339,61 +359,35 @@
         </div>
     </div>
 
+    <!-- Полноэкранный оверлей (аналогично video.html) -->
+    <div class="fullscreen-overlay" id="fullscreenOverlay">
+        <div class="close-fullscreen" id="closeFullscreenBtn">×</div>
+        <div class="fullscreen-scene" id="fullscreenScene"></div>
+    </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            const mainScene = document.getElementById('mainScene');
             const card = document.getElementById('card');
             const openBtn = document.getElementById('open-btn');
             const audio = document.getElementById('bg-music');
             const muteBtn = document.getElementById('mute-btn');
             const frontAssembly = document.getElementById('front-assembly');
-            const scene = document.querySelector('.scene');
-            const closeFullscreenBtn = document.getElementById('closeFullscreenBtn');
             
+            const overlay = document.getElementById('fullscreenOverlay');
+            const fullscreenSceneContainer = document.getElementById('fullscreenScene');
+            const closeBtn = document.getElementById('closeFullscreenBtn');
+
             let isOpen = false;
             let isMuted = false;
             let isFullscreen = false;
 
-            // --- Функция подстройки размера открытки под доступную область ---
-            function resizeCardToFit() {
-                const isMobile = window.innerWidth <= 768;
-                if (!isMobile && !isFullscreen) return;
-
-                const screenWidth = window.innerWidth;
-                const screenHeight = window.innerHeight;
-                const targetRatio = 550 / 400;
-                let newWidth, newHeight;
-
-                const isLandscape = screenWidth > screenHeight;
-                if (isLandscape) {
-                    newHeight = Math.min(screenHeight * 0.9, 400);
-                    newWidth = newHeight / targetRatio;
-                    if (newWidth > screenWidth * 0.9) {
-                        newWidth = screenWidth * 0.9;
-                        newHeight = newWidth * targetRatio;
-                    }
-                } else {
-                    newHeight = Math.min(screenHeight * 0.92, 600);
-                    newWidth = newHeight / targetRatio;
-                    if (newWidth > screenWidth * 0.92) {
-                        newWidth = screenWidth * 0.92;
-                        newHeight = newWidth * targetRatio;
-                    }
-                }
-                
-                scene.style.width = newWidth + 'px';
-                scene.style.height = newHeight + 'px';
-                document.documentElement.style.setProperty('--card-width', newWidth + 'px');
-                document.documentElement.style.setProperty('--card-height', newHeight + 'px');
-                
-                if (isOpen) applyOpenTransform();
-            }
-
-            // Смещение открытой открытки
+            // Функция расчёта смещения для открытой открытки (только для обычного режима)
             const calculateOffset = () => {
                 if (!card) return 180;
                 const cardWidth = card.offsetWidth;
                 const screenWidth = window.innerWidth;
-                const padding = 5;
+                const padding = 10;
                 let offset = cardWidth / 2;
                 const maxOffset = screenWidth - cardWidth - padding;
                 if (offset > maxOffset && maxOffset > 20) offset = maxOffset;
@@ -401,7 +395,7 @@
             };
 
             const applyOpenTransform = () => {
-                if (isOpen) {
+                if (isOpen && !isFullscreen) {
                     const offset = calculateOffset();
                     card.style.transform = `translateX(${offset}px)`;
                 }
@@ -425,65 +419,75 @@
                 }
             };
 
-            // === ЭМУЛЯЦИЯ ПОЛНОЭКРАННОГО РЕЖИМА (как в foto.html) ===
-            function enterFullscreen() {
-                if (isFullscreen) return;
-                isFullscreen = true;
-                document.body.classList.add('fake-fullscreen');
-                // Пересчитываем размеры под весь экран
-                const screenWidth = window.innerWidth;
-                const screenHeight = window.innerHeight;
-                const targetRatio = 550 / 400;
-                let newWidth, newHeight;
-                if (screenWidth > screenHeight) { // landscape
-                    newHeight = screenHeight * 0.95;
-                    newWidth = newHeight / targetRatio;
-                    if (newWidth > screenWidth * 0.95) {
-                        newWidth = screenWidth * 0.95;
-                        newHeight = newWidth * targetRatio;
-                    }
-                } else {
-                    newHeight = screenHeight * 0.95;
-                    newWidth = newHeight / targetRatio;
-                    if (newWidth > screenWidth * 0.95) {
-                        newWidth = screenWidth * 0.95;
-                        newHeight = newWidth * targetRatio;
-                    }
-                }
-                scene.style.width = newWidth + 'px';
-                scene.style.height = newHeight + 'px';
-                document.documentElement.style.setProperty('--card-width', newWidth + 'px');
-                document.documentElement.style.setProperty('--card-height', newHeight + 'px');
-                if (isOpen) applyOpenTransform();
-            }
-
-            function exitFullscreen() {
-                if (!isFullscreen) return;
-                isFullscreen = false;
-                document.body.classList.remove('fake-fullscreen');
-                // Возвращаем обычные размеры (мобильная/компьютерная версия)
-                resizeCardToFit();
-                if (isOpen) applyOpenTransform();
-            }
-
-            // Открытие открытки (вызывается по кнопке или клику)
+            // Открытие открытки (переворот, музыка, затем переход в оверлей)
             const openCard = () => {
                 if (isOpen) return;
                 isOpen = true;
+
                 document.body.classList.add('no-scroll');
                 card.classList.add('is-open');
-                setTimeout(() => applyOpenTransform(), 10);
+                
+                setTimeout(() => {
+                    applyOpenTransform();
+                }, 10);
+                
                 if (!isMuted) playMusic();
-                setTimeout(() => document.body.classList.remove('no-scroll'), 1600);
-                // После открытия включаем полноэкранный режим (эмуляция)
-                enterFullscreen();
+                
+                // Через небольшую задержку после анимации перехода показываем оверлей
+                setTimeout(() => {
+                    enterFullscreenMode();
+                }, 800); // ждём пока завершится основная анимация
+
+                setTimeout(() => {
+                    document.body.classList.remove('no-scroll');
+                }, 1600);
             };
 
-            // Закрытие полноэкранного режима при клике на крестик
-            closeFullscreenBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                exitFullscreen();
-            });
+            // Функция переноса открытки в оверлей
+            function enterFullscreenMode() {
+                if (isFullscreen) return;
+                isFullscreen = true;
+                
+                // Клонируем основной контейнер .scene со всем содержимым
+                const cloneScene = mainScene.cloneNode(true);
+                // Очищаем контейнер оверлея и добавляем клон
+                fullscreenSceneContainer.innerHTML = '';
+                fullscreenSceneContainer.appendChild(cloneScene);
+                
+                // В клоне удаляем старые ID, чтобы не было конфликтов
+                const cloneCard = cloneScene.querySelector('.card');
+                if (cloneCard) cloneCard.removeAttribute('id');
+                const cloneOpenBtn = cloneScene.querySelector('#open-btn');
+                if (cloneOpenBtn) cloneOpenBtn.removeAttribute('id');
+                const cloneMuteBtn = cloneScene.querySelector('#mute-btn');
+                if (cloneMuteBtn) cloneMuteBtn.removeAttribute('id');
+                
+                // В клоне открытка уже в состоянии is-open (класс есть), но нужно убедиться, что трансформация сброшена
+                cloneCard.style.transform = '';
+                // Также убираем лишние стили позиционирования
+                cloneScene.style.transform = '';
+                
+                // Показываем оверлей
+                overlay.classList.add('active');
+                document.body.style.overflow = 'hidden';
+                
+                // При клике на оверлей (но не на саму открытку) закрываем
+                overlay.addEventListener('click', function(e) {
+                    if (e.target === overlay || e.target === closeBtn) {
+                        exitFullscreenMode();
+                    }
+                }, { once: false });
+            }
+            
+            function exitFullscreenMode() {
+                if (!isFullscreen) return;
+                isFullscreen = false;
+                overlay.classList.remove('active');
+                fullscreenSceneContainer.innerHTML = '';
+                document.body.style.overflow = '';
+                // Возвращаем прокрутку, если нужно
+                if (!isOpen) document.body.classList.remove('no-scroll');
+            }
 
             // Обработчики
             if (openBtn) {
@@ -492,12 +496,14 @@
                     openCard();
                 });
             }
+            
             if (frontAssembly) {
                 frontAssembly.addEventListener('click', (e) => {
                     if (e.target === openBtn || openBtn?.contains(e.target)) return;
                     if (!isOpen) openCard();
                 });
             }
+            
             if (muteBtn) {
                 muteBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
@@ -514,91 +520,37 @@
                     }
                 });
             }
-
-            // Адаптация при изменении размера или ориентации
+            
+            // Адаптация при ресайзе (только для обычного режима)
             let resizeTimer;
             window.addEventListener('resize', () => {
                 clearTimeout(resizeTimer);
                 resizeTimer = setTimeout(() => {
-                    if (isFullscreen) {
-                        // Если в полноэкранном режиме, пересчитываем размер под новый экран
-                        const screenWidth = window.innerWidth;
-                        const screenHeight = window.innerHeight;
-                        const targetRatio = 550 / 400;
-                        let newWidth, newHeight;
-                        if (screenWidth > screenHeight) {
-                            newHeight = screenHeight * 0.95;
-                            newWidth = newHeight / targetRatio;
-                            if (newWidth > screenWidth * 0.95) {
-                                newWidth = screenWidth * 0.95;
-                                newHeight = newWidth * targetRatio;
-                            }
-                        } else {
-                            newHeight = screenHeight * 0.95;
-                            newWidth = newHeight / targetRatio;
-                            if (newWidth > screenWidth * 0.95) {
-                                newWidth = screenWidth * 0.95;
-                                newHeight = newWidth * targetRatio;
-                            }
-                        }
-                        scene.style.width = newWidth + 'px';
-                        scene.style.height = newHeight + 'px';
-                        document.documentElement.style.setProperty('--card-width', newWidth + 'px');
-                        document.documentElement.style.setProperty('--card-height', newHeight + 'px');
-                        if (isOpen) applyOpenTransform();
-                    } else {
-                        resizeCardToFit();
-                        if (isOpen) applyOpenTransform();
+                    if (!isFullscreen && isOpen) {
+                        applyOpenTransform();
                     }
                 }, 150);
             });
             window.addEventListener('orientationchange', () => {
                 setTimeout(() => {
-                    if (isFullscreen) {
-                        const screenWidth = window.innerWidth;
-                        const screenHeight = window.innerHeight;
-                        const targetRatio = 550 / 400;
-                        let newWidth, newHeight;
-                        if (screenWidth > screenHeight) {
-                            newHeight = screenHeight * 0.95;
-                            newWidth = newHeight / targetRatio;
-                            if (newWidth > screenWidth * 0.95) {
-                                newWidth = screenWidth * 0.95;
-                                newHeight = newWidth * targetRatio;
-                            }
-                        } else {
-                            newHeight = screenHeight * 0.95;
-                            newWidth = newHeight / targetRatio;
-                            if (newWidth > screenWidth * 0.95) {
-                                newWidth = screenWidth * 0.95;
-                                newHeight = newWidth * targetRatio;
-                            }
-                        }
-                        scene.style.width = newWidth + 'px';
-                        scene.style.height = newHeight + 'px';
-                        document.documentElement.style.setProperty('--card-width', newWidth + 'px');
-                        document.documentElement.style.setProperty('--card-height', newHeight + 'px');
-                        if (isOpen) applyOpenTransform();
-                    } else {
-                        resizeCardToFit();
-                        if (isOpen) applyOpenTransform();
-                    }
+                    if (!isFullscreen && isOpen) applyOpenTransform();
                 }, 100);
             });
-
-            // Проверка обложки
+            
+            // Проверка наличия изображения обложки
             const coverFront = document.querySelector('.cover-front');
             if (coverFront) {
                 const testImg = new Image();
                 testImg.onerror = () => coverFront.style.backgroundImage = 'linear-gradient(135deg, #8b2c2c, #5e1919)';
                 testImg.src = 'img/3_4.jpg';
             }
+            
             if (audio) {
                 audio.load();
                 audio.muted = false;
             }
-            resizeCardToFit();
-            setTimeout(resizeCardToFit, 100);
+            
+            // Изначально открытка закрыта, всё корректно
         });
     </script>
 </body>
