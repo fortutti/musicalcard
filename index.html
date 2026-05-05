@@ -18,7 +18,7 @@
 
         body {
             margin: 0;
-            padding: 0;
+            padding: 0px;
             min-height: 100vh;
             display: flex;
             justify-content: center;
@@ -27,6 +27,54 @@
             font-family: 'Georgia', serif;
             overflow: hidden;
             perspective: 2000px;
+            transition: background 0.3s;
+        }
+
+        /* Режим "fullscreen" (эмуляция) */
+        body.fake-fullscreen {
+            background: #000;
+            overflow: hidden;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+        }
+        body.fake-fullscreen .scene {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1000;
+            transform: none !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        body.fake-fullscreen .card.is-open {
+            transform: translateX(calc(50% - 15px));
+        }
+        /* Кнопка закрытия fullscreen */
+        .close-fullscreen {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 2000;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            font-size: 32px;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            backdrop-filter: blur(5px);
+            font-family: sans-serif;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+        body.fake-fullscreen .close-fullscreen {
+            display: flex;
         }
 
         .scene {
@@ -118,7 +166,6 @@
             border-radius: 4px 12px 12px 4px;
         }
 
-        /* ОБЛОЖКА С ЦЕНТРИРОВАННЫМ ИЗОБРАЖЕНИЕМ */
         .cover-front {
             position: absolute;
             inset: 0;
@@ -128,7 +175,6 @@
             background-position: center center;
             background-repeat: no-repeat;
             background-color: #6a1b1b;
-            
             display: flex;
             flex-direction: column;
             justify-content: flex-end;
@@ -210,7 +256,6 @@
             transform: scale(0.94);
         }
 
-        /* --- ОТКРЫТОЕ СОСТОЯНИЕ --- */
         .card.is-open .front-assembly {
             transform: rotateY(-180deg);
             z-index: 5;
@@ -220,10 +265,7 @@
             display: none;
         }
 
-        /* ===========================================
-           БАЗОВЫЕ АДАПТИВНЫЕ СТИЛИ (будут переопределены JS)
-           =========================================== */
-        
+        /* ========== Адаптив для компьютеров ========== */
         @media (min-width: 769px) {
             :root {
                 --card-width: 420px;
@@ -249,7 +291,6 @@
             }
         }
 
-        /* Предотвращение прокрутки во время анимации */
         body.no-scroll {
             overflow: hidden;
             position: fixed;
@@ -264,43 +305,37 @@
         <source src="audio/Irina_Allegrova_-_S_dnjom_rozhdeniya_62687889_[cut_26sec].mp3" type="audio/mpeg">
     </audio>
 
+    <!-- Кнопка закрытия полноэкранного режима -->
+    <div class="close-fullscreen" id="closeFullscreenBtn">✕</div>
+
     <div class="scene">
         <div class="card" id="card">
-            
             <div class="back-page">
                 <img class="gif" src="video/gif_3.gif" alt="Поздравление">
                 <button class="sound-btn" id="mute-btn" title="Вкл/Выкл звук">🔊</button>
             </div>
-
             <div class="front-assembly" id="front-assembly">
-                
                 <div class="cover-front">
                     <button class="btn-open" id="open-btn">✨ Открыть ✨</button> 
                 </div>
-
                 <div class="cover-back">
                     <p class="greeting-text">
                         Наташа, от всей души поздравляю тебя с Днём Рождения! 🥳🎉<br><br>
                         Этот день – особенный, наполненный светом, теплом и самыми искренними пожеланиями. 
                         Пусть этот день станет началом нового, прекрасного года жизни, полного счастливых моментов, открытий и успехов.<br>
-
                         Желаю тебе безграничного счастья, которое согревает душу и дарит ощущение полноты жизни. 
                         Крепкого здоровья, чтобы сил хватало на все начинания и грандиозные планы. 
                         Пусть каждый день будет озарён радостью, а улыбка не сходит с твоего лица.<br>
-
                         Чтобы рядом всегда были те, кто ценит, поддерживает и бережёт тебя. 
                         Все твои заветные желания и цели всегда реализуются с легкостью. 
                         Каждый шаг на этом пути пусть будет уверенным и приносящим удовлетворение.<br>
-
                         Этот год пусть подарит приятные сюрпризы, незабываемые путешествия и встречи с интересными людьми. 
                         Желаю гармонии, вдохновения и благополучия во всём.
                         <br><br>
                         С Днём Рождения! Пусть этот праздник будет таким же прекрасным и неповторимым, как ты сама! 🎂🥂💐❤️
                     </p>
                 </div>
-
             </div>
-
         </div>
     </div>
 
@@ -312,38 +347,32 @@
             const muteBtn = document.getElementById('mute-btn');
             const frontAssembly = document.getElementById('front-assembly');
             const scene = document.querySelector('.scene');
+            const closeFullscreenBtn = document.getElementById('closeFullscreenBtn');
             
             let isOpen = false;
             let isMuted = false;
+            let isFullscreen = false;
 
-            // --- Функция подстройки размера открытки под доступную область экрана ---
+            // --- Функция подстройки размера открытки под доступную область ---
             function resizeCardToFit() {
-                // Определяем, мобильное ли устройство (ширина <= 768)
                 const isMobile = window.innerWidth <= 768;
-                if (!isMobile) return; // на компьютерах оставляем фиксированный размер
+                if (!isMobile && !isFullscreen) return;
 
                 const screenWidth = window.innerWidth;
                 const screenHeight = window.innerHeight;
-                
-                // Желаемое соотношение сторон открытки (portrait)
-                const targetRatio = 550 / 400; // высота/ширина ~1.375
-                
+                const targetRatio = 550 / 400;
                 let newWidth, newHeight;
-                
-                // Проверяем ориентацию
+
                 const isLandscape = screenWidth > screenHeight;
-                
                 if (isLandscape) {
-                    // Для ландшафта делаем открытку шире, но вписываем в экран
-                    newHeight = screenHeight * 0.85; // небольшой отступ сверху/снизу
+                    newHeight = Math.min(screenHeight * 0.9, 400);
                     newWidth = newHeight / targetRatio;
                     if (newWidth > screenWidth * 0.9) {
                         newWidth = screenWidth * 0.9;
                         newHeight = newWidth * targetRatio;
                     }
                 } else {
-                    // Портрет: открытка почти на весь экран
-                    newHeight = screenHeight * 0.92;
+                    newHeight = Math.min(screenHeight * 0.92, 600);
                     newWidth = newHeight / targetRatio;
                     if (newWidth > screenWidth * 0.92) {
                         newWidth = screenWidth * 0.92;
@@ -351,36 +380,26 @@
                     }
                 }
                 
-                // Применяем размеры
                 scene.style.width = newWidth + 'px';
                 scene.style.height = newHeight + 'px';
-                
-                // Обновляем CSS-переменные (для дочерних элементов, если нужно)
                 document.documentElement.style.setProperty('--card-width', newWidth + 'px');
                 document.documentElement.style.setProperty('--card-height', newHeight + 'px');
                 
-                // Если открытка уже открыта, пересчитываем смещение
-                if (isOpen) {
-                    applyOpenTransform();
-                }
+                if (isOpen) applyOpenTransform();
             }
 
-            // Функция расчета смещения для открытой открытки
+            // Смещение открытой открытки
             const calculateOffset = () => {
                 if (!card) return 180;
                 const cardWidth = card.offsetWidth;
                 const screenWidth = window.innerWidth;
                 const padding = 5;
-                
                 let offset = cardWidth / 2;
                 const maxOffset = screenWidth - cardWidth - padding;
-                if (offset > maxOffset && maxOffset > 20) {
-                    offset = maxOffset;
-                }
+                if (offset > maxOffset && maxOffset > 20) offset = maxOffset;
                 return Math.max(offset, 10);
             };
 
-            // Применение трансформации для открытой открытки
             const applyOpenTransform = () => {
                 if (isOpen) {
                     const offset = calculateOffset();
@@ -388,7 +407,7 @@
                 }
             };
 
-            // Воспроизведение музыки
+            // Музыка
             const playMusic = () => {
                 if (!audio || isMuted) return;
                 audio.volume = 0.5;
@@ -396,9 +415,7 @@
                 if (playPromise !== undefined) {
                     playPromise.catch(() => {
                         const resumeAudio = () => {
-                            if (!isMuted && isOpen) {
-                                audio.play().catch(() => {});
-                            }
+                            if (!isMuted && isOpen) audio.play().catch(()=>{});
                             document.removeEventListener('click', resumeAudio);
                             document.removeEventListener('touchstart', resumeAudio);
                         };
@@ -408,42 +425,79 @@
                 }
             };
 
-            // Открытие открытки
+            // === ЭМУЛЯЦИЯ ПОЛНОЭКРАННОГО РЕЖИМА (как в foto.html) ===
+            function enterFullscreen() {
+                if (isFullscreen) return;
+                isFullscreen = true;
+                document.body.classList.add('fake-fullscreen');
+                // Пересчитываем размеры под весь экран
+                const screenWidth = window.innerWidth;
+                const screenHeight = window.innerHeight;
+                const targetRatio = 550 / 400;
+                let newWidth, newHeight;
+                if (screenWidth > screenHeight) { // landscape
+                    newHeight = screenHeight * 0.95;
+                    newWidth = newHeight / targetRatio;
+                    if (newWidth > screenWidth * 0.95) {
+                        newWidth = screenWidth * 0.95;
+                        newHeight = newWidth * targetRatio;
+                    }
+                } else {
+                    newHeight = screenHeight * 0.95;
+                    newWidth = newHeight / targetRatio;
+                    if (newWidth > screenWidth * 0.95) {
+                        newWidth = screenWidth * 0.95;
+                        newHeight = newWidth * targetRatio;
+                    }
+                }
+                scene.style.width = newWidth + 'px';
+                scene.style.height = newHeight + 'px';
+                document.documentElement.style.setProperty('--card-width', newWidth + 'px');
+                document.documentElement.style.setProperty('--card-height', newHeight + 'px');
+                if (isOpen) applyOpenTransform();
+            }
+
+            function exitFullscreen() {
+                if (!isFullscreen) return;
+                isFullscreen = false;
+                document.body.classList.remove('fake-fullscreen');
+                // Возвращаем обычные размеры (мобильная/компьютерная версия)
+                resizeCardToFit();
+                if (isOpen) applyOpenTransform();
+            }
+
+            // Открытие открытки (вызывается по кнопке или клику)
             const openCard = () => {
                 if (isOpen) return;
                 isOpen = true;
-
                 document.body.classList.add('no-scroll');
                 card.classList.add('is-open');
-                
-                setTimeout(() => {
-                    applyOpenTransform();
-                }, 10);
-                
-                if (!isMuted) {
-                    playMusic();
-                }
-                
-                setTimeout(() => {
-                    document.body.classList.remove('no-scroll');
-                }, 1600);
+                setTimeout(() => applyOpenTransform(), 10);
+                if (!isMuted) playMusic();
+                setTimeout(() => document.body.classList.remove('no-scroll'), 1600);
+                // После открытия включаем полноэкранный режим (эмуляция)
+                enterFullscreen();
             };
 
-            // Обработчики событий
+            // Закрытие полноэкранного режима при клике на крестик
+            closeFullscreenBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                exitFullscreen();
+            });
+
+            // Обработчики
             if (openBtn) {
                 openBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     openCard();
                 });
             }
-            
             if (frontAssembly) {
                 frontAssembly.addEventListener('click', (e) => {
                     if (e.target === openBtn || openBtn?.contains(e.target)) return;
                     if (!isOpen) openCard();
                 });
             }
-            
             if (muteBtn) {
                 muteBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
@@ -452,9 +506,7 @@
                         audio.muted = false;
                         muteBtn.textContent = '🔊';
                         isMuted = false;
-                        if (isOpen && audio.paused) {
-                            audio.play().catch(() => {});
-                        }
+                        if (isOpen && audio.paused) audio.play().catch(()=>{});
                     } else {
                         audio.muted = true;
                         muteBtn.textContent = '🔇';
@@ -462,49 +514,90 @@
                     }
                 });
             }
-            
-            // Обработка изменения размера, ориентации и поворота
+
+            // Адаптация при изменении размера или ориентации
             let resizeTimer;
-            const handleResizeAndOrientation = () => {
+            window.addEventListener('resize', () => {
                 clearTimeout(resizeTimer);
                 resizeTimer = setTimeout(() => {
-                    resizeCardToFit();            // подстраиваем размер под экран
-                    if (isOpen) {
-                        applyOpenTransform();
+                    if (isFullscreen) {
+                        // Если в полноэкранном режиме, пересчитываем размер под новый экран
+                        const screenWidth = window.innerWidth;
+                        const screenHeight = window.innerHeight;
+                        const targetRatio = 550 / 400;
+                        let newWidth, newHeight;
+                        if (screenWidth > screenHeight) {
+                            newHeight = screenHeight * 0.95;
+                            newWidth = newHeight / targetRatio;
+                            if (newWidth > screenWidth * 0.95) {
+                                newWidth = screenWidth * 0.95;
+                                newHeight = newWidth * targetRatio;
+                            }
+                        } else {
+                            newHeight = screenHeight * 0.95;
+                            newWidth = newHeight / targetRatio;
+                            if (newWidth > screenWidth * 0.95) {
+                                newWidth = screenWidth * 0.95;
+                                newHeight = newWidth * targetRatio;
+                            }
+                        }
+                        scene.style.width = newWidth + 'px';
+                        scene.style.height = newHeight + 'px';
+                        document.documentElement.style.setProperty('--card-width', newWidth + 'px');
+                        document.documentElement.style.setProperty('--card-height', newHeight + 'px');
+                        if (isOpen) applyOpenTransform();
+                    } else {
+                        resizeCardToFit();
+                        if (isOpen) applyOpenTransform();
                     }
                 }, 150);
-            };
-            
-            window.addEventListener('resize', handleResizeAndOrientation);
+            });
             window.addEventListener('orientationchange', () => {
                 setTimeout(() => {
-                    resizeCardToFit();
-                    if (isOpen) {
-                        applyOpenTransform();
+                    if (isFullscreen) {
+                        const screenWidth = window.innerWidth;
+                        const screenHeight = window.innerHeight;
+                        const targetRatio = 550 / 400;
+                        let newWidth, newHeight;
+                        if (screenWidth > screenHeight) {
+                            newHeight = screenHeight * 0.95;
+                            newWidth = newHeight / targetRatio;
+                            if (newWidth > screenWidth * 0.95) {
+                                newWidth = screenWidth * 0.95;
+                                newHeight = newWidth * targetRatio;
+                            }
+                        } else {
+                            newHeight = screenHeight * 0.95;
+                            newWidth = newHeight / targetRatio;
+                            if (newWidth > screenWidth * 0.95) {
+                                newWidth = screenWidth * 0.95;
+                                newHeight = newWidth * targetRatio;
+                            }
+                        }
+                        scene.style.width = newWidth + 'px';
+                        scene.style.height = newHeight + 'px';
+                        document.documentElement.style.setProperty('--card-width', newWidth + 'px');
+                        document.documentElement.style.setProperty('--card-height', newHeight + 'px');
+                        if (isOpen) applyOpenTransform();
+                    } else {
+                        resizeCardToFit();
+                        if (isOpen) applyOpenTransform();
                     }
                 }, 100);
             });
-            
-            // Проверка наличия изображения обложки
+
+            // Проверка обложки
             const coverFront = document.querySelector('.cover-front');
             if (coverFront) {
                 const testImg = new Image();
-                testImg.onerror = () => {
-                    coverFront.style.backgroundImage = 'linear-gradient(135deg, #8b2c2c, #5e1919)';
-                };
+                testImg.onerror = () => coverFront.style.backgroundImage = 'linear-gradient(135deg, #8b2c2c, #5e1919)';
                 testImg.src = 'img/3_4.jpg';
             }
-            
-            // Инициализация аудио и подгонка размера
             if (audio) {
                 audio.load();
                 audio.muted = false;
             }
-            
-            // Запускаем подстройку размера при загрузке
             resizeCardToFit();
-            
-            // Дополнительный вызов через секунду, чтобы точно поймать размер после всех рендеров
             setTimeout(resizeCardToFit, 100);
         });
     </script>
