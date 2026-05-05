@@ -25,14 +25,13 @@
             align-items: center;
             background: linear-gradient(145deg, #1e2a36 0%, #2c3e50 100%);
             font-family: 'Georgia', serif;
-            overflow: hidden; /* изначально скролл запрещён */
+            overflow: hidden;
             perspective: 2000px;
         }
 
-        /* При открытой открытке разрешаем скролл */
         body.card-open {
             overflow: auto;
-            align-items: flex-start; /* чтобы можно было скроллить */
+            align-items: flex-start;
             padding-top: 20px;
             padding-bottom: 20px;
         }
@@ -56,7 +55,6 @@
             cursor: pointer;
         }
 
-        /* --- ЗАДНИЙ ПЛАН (Правая страница) --- */
         .back-page {
             position: absolute;
             top: 0;
@@ -113,7 +111,32 @@
             transform: scale(0.92);
         }
 
-        /* --- ПЕРЕДНЯЯ ЧАСТЬ (Обложка + Левая страница) --- */
+        /* Кнопка полноэкранного режима */
+        .fullscreen-btn {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            z-index: 30;
+            background: rgba(0,0,0,0.65);
+            backdrop-filter: blur(4px);
+            border: none;
+            border-radius: 40px;
+            width: 44px;
+            height: 44px;
+            cursor: pointer;
+            font-size: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            transition: transform 0.2s, background 0.2s;
+            color: #fff;
+            font-family: sans-serif;
+        }
+        .fullscreen-btn:active {
+            transform: scale(0.92);
+        }
+
         .front-assembly {
             position: absolute;
             top: 0;
@@ -226,7 +249,7 @@
             display: none;
         }
 
-        /* Адаптив для компьютеров */
+        /* Компьютеры */
         @media (min-width: 769px) {
             :root {
                 --card-width: 420px;
@@ -257,8 +280,6 @@
                 transform: translateX(50%);
             }
         }
-
-        /* Адаптивные размеры для мобильных (динамические через JS) */
     </style>
 </head>
 <body>
@@ -298,6 +319,9 @@
         </div>
     </div>
 
+    <!-- Кнопка полноэкранного режима (появляется только после открытия открытки) -->
+    <button class="fullscreen-btn" id="fullscreenBtn" style="display: none;">⛶</button>
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const scene = document.getElementById('scene');
@@ -306,23 +330,20 @@
             const audio = document.getElementById('bg-music');
             const muteBtn = document.getElementById('mute-btn');
             const frontAssembly = document.getElementById('front-assembly');
+            const fullscreenBtn = document.getElementById('fullscreenBtn');
+            
             let isOpen = false;
             let isMuted = false;
 
             // Функция пересчёта размера открытки под текущее окно (для мобильных)
             function resizeCardToWindow() {
-                // На компьютерах не трогаем
                 if (window.innerWidth >= 769) return;
-
                 const vw = window.innerWidth;
                 const vh = window.innerHeight;
-                const targetRatio = 550 / 400; // высота / ширина ≈ 1.375
+                const targetRatio = 550 / 400;
                 let newWidth, newHeight;
-
-                // Определяем ориентацию
                 const isLandscape = vw > vh;
                 if (isLandscape) {
-                    // В ландшафте делаем открытку с высотой, вписывающейся в экран
                     newHeight = Math.min(vh * 0.85, 500);
                     newWidth = newHeight / targetRatio;
                     if (newWidth > vw * 0.85) {
@@ -330,7 +351,6 @@
                         newHeight = newWidth * targetRatio;
                     }
                 } else {
-                    // Портрет
                     newHeight = Math.min(vh * 0.8, 550);
                     newWidth = newHeight / targetRatio;
                     if (newWidth > vw * 0.85) {
@@ -344,7 +364,6 @@
                 document.documentElement.style.setProperty('--card-height', newHeight + 'px');
             }
 
-            // Функция расчёта смещения для открытой открытки (только не на компьютере)
             function calculateOffset() {
                 if (!card) return 180;
                 const cardWidth = card.offsetWidth;
@@ -365,7 +384,6 @@
                 }
             }
 
-            // Музыка
             function playMusic() {
                 if (!audio || isMuted) return;
                 audio.volume = 0.5;
@@ -383,14 +401,40 @@
                 }
             }
 
+            // Полноэкранный режим через кнопку
+            function toggleFullscreen() {
+                const elem = document.documentElement;
+                if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+                    // Вход в полноэкранный режим
+                    const requestMethod = elem.requestFullscreen || elem.webkitRequestFullscreen;
+                    if (requestMethod) {
+                        requestMethod.call(elem).catch(err => {
+                            console.warn('Fullscreen error:', err);
+                        });
+                    }
+                } else {
+                    // Выход
+                    const exitMethod = document.exitFullscreen || document.webkitExitFullscreen;
+                    if (exitMethod) exitMethod.call(document);
+                }
+            }
+
+            // Отслеживание изменения полноэкранного режима для коррекции размеров
+            function onFullscreenChange() {
+                setTimeout(() => {
+                    resizeCardToWindow();
+                    if (isOpen) applyOpenTransform();
+                }, 100);
+            }
+            document.addEventListener('fullscreenchange', onFullscreenChange);
+            document.addEventListener('webkitfullscreenchange', onFullscreenChange);
+
             // Открытие открытки
             function openCard() {
                 if (isOpen) return;
                 isOpen = true;
-                // Разрешаем прокрутку body, чтобы можно было свайпнуть вверх и скрыть адресную строку
                 document.body.classList.add('card-open');
                 card.classList.add('is-open');
-                // Чуть задержим пересчёт смещения (для анимации)
                 setTimeout(() => {
                     if (window.innerWidth < 769) {
                         const offset = calculateOffset();
@@ -400,7 +444,9 @@
                     }
                 }, 10);
                 if (!isMuted) playMusic();
-                // Дополнительно попробуем «прокрутить» страницу вверх, чтобы скрыть адресную строку
+                // Показываем кнопку полноэкранного режима
+                fullscreenBtn.style.display = 'flex';
+                // Небольшая прокрутка для возможного скрытия адресной строки (опционально)
                 setTimeout(() => {
                     window.scrollTo({ top: 1, behavior: 'smooth' });
                 }, 200);
@@ -435,6 +481,12 @@
                     }
                 });
             }
+            if (fullscreenBtn) {
+                fullscreenBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    toggleFullscreen();
+                });
+            }
 
             // Адаптация при изменении размера / ориентации
             let resizeTimer;
@@ -442,31 +494,17 @@
                 clearTimeout(resizeTimer);
                 resizeTimer = setTimeout(() => {
                     resizeCardToWindow();
-                    if (isOpen) {
-                        if (window.innerWidth < 769) {
-                            const offset = calculateOffset();
-                            card.style.transform = `translateX(${offset}px)`;
-                        } else {
-                            card.style.transform = `translateX(50%)`;
-                        }
-                    }
+                    if (isOpen) applyOpenTransform();
                 }, 150);
             });
             window.addEventListener('orientationchange', () => {
                 setTimeout(() => {
                     resizeCardToWindow();
-                    if (isOpen) {
-                        if (window.innerWidth < 769) {
-                            const offset = calculateOffset();
-                            card.style.transform = `translateX(${offset}px)`;
-                        } else {
-                            card.style.transform = `translateX(50%)`;
-                        }
-                    }
+                    if (isOpen) applyOpenTransform();
                 }, 100);
             });
 
-            // Проверка наличия изображения обложки
+            // Проверка изображения обложки
             const coverFront = document.querySelector('.cover-front');
             if (coverFront) {
                 const testImg = new Image();
@@ -477,7 +515,6 @@
                 audio.load();
                 audio.muted = false;
             }
-            // Инициализация размеров
             resizeCardToWindow();
         });
     </script>
