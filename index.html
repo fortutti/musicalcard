@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Открытка для Наташи">
     <link rel="apple-touch-icon" href="img/3_4.jpg">
-    
+
     <title>3D Открытка | С Днём Рождения, Наташа</title>
     <style>
         :root {
@@ -496,32 +496,59 @@
             display: none;
         }
 
-        /* ========== ПОЛНОЭКРАННЫЙ РЕЖИМ ========== */
-        :fullscreen,
-        :-webkit-full-screen,
-        :-moz-full-screen,
-        :-ms-fullscreen {
-            width: 100% !important;
-            height: 100% !important;
-            max-width: none !important;
-            max-height: none !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            background: #1e2a36 !important;
-            display: flex !important;
-            justify-content: center !important;
-            align-items: center !important;
+        /* Кнопка ⛶ */
+        .fullscreen-toggle {
+            position: fixed;
+            top: env(safe-area-inset-top, 15px);
+            right: env(safe-area-inset-right, 15px);
+            z-index: 999;
+            background: rgba(0,0,0,0.6);
+            color: #fff;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            transition: transform 0.2s, opacity 0.3s;
         }
 
+        .fullscreen-toggle:active {
+            transform: scale(0.9);
+        }
+
+        /* Показываем кнопку только в полноэкранном режиме или на мобильных */
+        @media (max-width: 768px) {
+            .fullscreen-toggle {
+                display: flex;
+            }
+        }
+        @media (min-width: 769px) {
+            .fullscreen-toggle {
+                display: none; /* На ПК кнопка не нужна, там и так много места */
+            }
+        }
+
+        /* === ПОЛНОЭКРАННЫЙ РЕЖИМ === */
         :fullscreen .scene,
         :-webkit-full-screen .scene,
         :-moz-full-screen .scene,
         :-ms-fullscreen .scene {
-            width: 100% !important;
-            height: 100% !important;
+            width: 100vw !important;
+            height: 100vh !important;
             max-width: none !important;
             max-height: none !important;
-            transform: none !important; /* Убираем сдвиг в открытой карточке */
+            margin: 0 !important;
+            padding: 0 !important;
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            background: #1e2a36 !important;
         }
 
         :fullscreen .card,
@@ -530,21 +557,22 @@
             height: 100% !important;
             max-width: 100vw !important;
             max-height: 100vh !important;
+            transform: none !important; /* Убираем сдвиг translateX */
         }
 
         :fullscreen .card.is-open,
         :-webkit-full-screen .card.is-open {
-            transform: none !important; /* Важно: убираем translateX в полноэкранном режиме */
+            transform: none !important;
         }
 
         :fullscreen .front-assembly,
         :-webkit-full-screen .front-assembly {
-            width: 50% !important; /* Левая половина — обложка */
+            width: 50% !important;
         }
 
         :fullscreen .back-page,
         :-webkit-full-screen .back-page {
-            width: 50% !important; /* Правая половина — контент */
+            width: 50% !important;
             left: 50% !important;
             right: auto !important;
         }
@@ -554,48 +582,19 @@
             border-radius: 0 !important;
             height: 100% !important;
             overflow-y: auto !important;
+            padding: 20px !important;
         }
 
-        /* Кнопка выхода из полноэкранного режима */
-        .exit-fullscreen-btn {
-            position: fixed;
-            top: env(safe-area-inset-top, 20px);
-            right: env(safe-area-inset-right, 20px);
-            z-index: 1000;
-            background: rgba(0,0,0,0.7);
-            color: #fff;
-            border: none;
-            border-radius: 50%;
-            width: 44px;
-            height: 44px;
-            font-size: 20px;
-            cursor: pointer;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            backdrop-filter: blur(4px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        :fullscreen .greeting-text,
+        :-webkit-full-screen .greeting-text {
+            font-size: clamp(16px, 4.5vw, 20px) !important;
+            line-height: 1.6 !important;
         }
 
-        :fullscreen .exit-fullscreen-btn,
-        :-webkit-full-screen .exit-fullscreen-btn {
+        /* Скрываем кнопку ⛶ при выходе из фуллскрина на больших экранах */
+        :fullscreen .fullscreen-toggle,
+        :-webkit-full-screen .fullscreen-toggle {
             display: flex !important;
-        }
-
-        /* Адаптация текста в полноэкранном режиме на мобильных */
-        @media (max-width: 768px) {
-            :fullscreen .greeting-text,
-            :-webkit-full-screen .greeting-text {
-                font-size: clamp(16px, 4.5vw, 20px) !important;
-                line-height: 1.6 !important;
-                padding: 10px !important;
-            }
-            
-            :fullscreen .btn-open,
-            :-webkit-full-screen .btn-open {
-                padding: 16px 32px !important;
-                font-size: 18px !important;
-            }
         }
     </style>
 </head>
@@ -606,8 +605,8 @@
     </audio>
 
     <div class="scene">
-        <!-- Кнопка выхода из полноэкранного режима -->
-        <button class="exit-fullscreen-btn" id="exit-fullscreen-btn" aria-label="Выйти из полноэкранного режима">✕</button>
+        <!-- Кнопка полноэкранного режима -->
+        <button class="fullscreen-toggle" id="fullscreen-toggle" aria-label="Полноэкранный режим">⛶</button>
         <div class="card" id="card">
             
             <div class="back-page">
@@ -647,243 +646,182 @@
         </div>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const card = document.getElementById('card');
-            const openBtn = document.getElementById('open-btn');
-            const audio = document.getElementById('bg-music');
-            const muteBtn = document.getElementById('mute-btn');
-            const frontAssembly = document.getElementById('front-assembly');
-            const exitFullscreenBtn = document.getElementById('exit-fullscreen-btn');
-            const scene = document.querySelector('.scene');
-            
-            let isOpen = false;
-            let isMuted = false;
-            let isFullscreen = false;
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+    const card = document.getElementById('card');
+    const openBtn = document.getElementById('open-btn');
+    const audio = document.getElementById('bg-music');
+    const muteBtn = document.getElementById('mute-btn');
+    const frontAssembly = document.getElementById('front-assembly');
+    const fullscreenToggle = document.getElementById('fullscreen-toggle');
+    const scene = document.querySelector('.scene');
+    
+    let isOpen = false;
+    let isMuted = false;
+    let isFullscreen = false;
 
-            // Проверка поддержки полноэкранного режима
-            const isFullscreenSupported = () => {
-                return document.documentElement.requestFullscreen || 
-                    document.documentElement.webkitRequestFullscreen ||
-                    document.documentElement.mozRequestFullScreen ||
-                    document.documentElement.msRequestFullscreen;
-            };
-
-            // Вход в полноэкранный режим
-            const enterFullscreen = (element) => {
-                if (element.requestFullscreen) {
-                    return element.requestFullscreen();
-                } else if (element.webkitRequestFullscreen) {
-                    return element.webkitRequestFullscreen();
-                } else if (element.mozRequestFullScreen) {
-                    return element.mozRequestFullScreen();
-                } else if (element.msRequestFullscreen) {
-                    return element.msRequestFullscreen();
+    // === ПОЛНОЭКРАННЫЙ РЕЖИМ ===
+    const toggleFullscreen = async () => {
+        try {
+            if (!document.fullscreenElement && 
+                !document.webkitFullscreenElement && 
+                !document.mozFullScreenElement && 
+                !document.msFullscreenElement) {
+                
+                // Вход в полноэкранный режим
+                if (scene.requestFullscreen) {
+                    await scene.requestFullscreen();
+                } else if (scene.webkitRequestFullscreen) {
+                    await scene.webkitRequestFullscreen();
+                } else if (scene.mozRequestFullScreen) {
+                    await scene.mozRequestFullScreen();
+                } else if (scene.msRequestFullscreen) {
+                    await scene.msRequestFullscreen();
                 }
-                return Promise.resolve();
-            };
-
-            // Выход из полноэкранного режима
-            const exitFullscreen = () => {
+                isFullscreen = true;
+                fullscreenToggle.textContent = '✕'; // Меняем иконку на "закрыть"
+            } else {
+                // Выход из полноэкранного режима
                 if (document.exitFullscreen) {
-                    return document.exitFullscreen();
+                    await document.exitFullscreen();
                 } else if (document.webkitExitFullscreen) {
-                    return document.webkitExitFullscreen();
+                    await document.webkitExitFullscreen();
                 } else if (document.mozCancelFullScreen) {
-                    return document.mozCancelFullScreen();
+                    await document.mozCancelFullScreen();
                 } else if (document.msExitFullscreen) {
-                    return document.msExitFullscreen();
+                    await document.msExitFullscreen();
                 }
-                return Promise.resolve();
-            };
-
-            // Обработчик изменения состояния полноэкранного режима
-            const handleFullscreenChange = () => {
-                isFullscreen = !!(document.fullscreenElement || 
-                                document.webkitFullscreenElement || 
-                                document.mozFullScreenElement ||
-                                document.msFullscreenElement);
-                
-                if (!isFullscreen && isOpen) {
-                    // Если вышли из полноэкранного режима, но карточка открыта — можно вернуть обычный режим
-                    card.style.transform = '';
-                }
-            };
-
-            // Воспроизведение музыки
-            const playMusic = () => {
-                if (!audio || isMuted) return;
-                audio.volume = 0.5;
-                const playPromise = audio.play();
-                if (playPromise !== undefined) {
-                    playPromise.catch(() => {
-                        const resumeAudio = () => {
-                            if (!isMuted && isOpen) {
-                                audio.play().catch(() => {});
-                            }
-                            document.removeEventListener('click', resumeAudio);
-                            document.removeEventListener('touchstart', resumeAudio);
-                        };
-                        document.addEventListener('click', resumeAudio, { once: true });
-                        document.addEventListener('touchstart', resumeAudio, { once: true });
-                    });
-                }
-            };
-
-            // Открытие открытки + вход в полноэкранный режим
-            const openCard = () => {
-                if (isOpen) return;
-                isOpen = true;
-
-                // Пробуем включить полноэкранный режим на мобильных
-                if (window.innerWidth <= 768 && isFullscreenSupported()) {
-                    enterFullscreen(scene).then(() => {
-                        isFullscreen = true;
-                    }).catch((err) => {
-                        console.log('Fullscreen не активирован:', err);
-                        // Если не удалось — просто открываем карточку без fullscreen
-                        activateOpenCard();
-                    });
-                } else {
-                    activateOpenCard();
-                }
-            };
-
-            // Активация открытия карточки (без fullscreen)
-            const activateOpenCard = () => {
-                document.body.classList.add('no-scroll');
-                card.classList.add('is-open');
-                
-                setTimeout(() => {
-                    applyOpenTransform();
-                }, 10);
-                
-                if (!isMuted) {
-                    playMusic();
-                }
-                
-                setTimeout(() => {
-                    document.body.classList.remove('no-scroll');
-                }, 1600);
-            };
-
-            // Функция расчета смещения для открытой открытки
-            const calculateOffset = () => {
-                if (!card || isFullscreen) return 0; // В полноэкранном режиме сдвиг не нужен
-                const cardWidth = card.offsetWidth;
-                const screenWidth = window.innerWidth;
-                const padding = 10;
-                
-                let offset = cardWidth / 2;
-                const maxOffset = screenWidth - cardWidth - padding;
-                if (offset > maxOffset && maxOffset > 20) {
-                    offset = maxOffset;
-                }
-                
-                return Math.max(offset, 10);
-            };
-
-            // Применение трансформации для открытой открытки
-            const applyOpenTransform = () => {
-                if (isOpen && !isFullscreen) {
-                    const offset = calculateOffset();
-                    card.style.transform = `translateX(${offset}px)`;
-                } else if (isFullscreen) {
-                    card.style.transform = 'none';
-                }
-            };
-
-            // Обработчики событий
-            if (openBtn) {
-                openBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    openCard();
-                });
+                isFullscreen = false;
+                fullscreenToggle.textContent = '⛶';
             }
-            
-            if (frontAssembly) {
-                frontAssembly.addEventListener('click', (e) => {
-                    if (e.target === openBtn || openBtn?.contains(e.target)) return;
-                    if (!isOpen) openCard();
-                });
-            }
-            
-            // Кнопка выхода из полноэкранного режима
-            if (exitFullscreenBtn) {
-                exitFullscreenBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    exitFullscreen().catch(() => {});
-                });
-            }
-            
-            // Выход по нажатию Escape
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape' && isFullscreen) {
-                    exitFullscreen().catch(() => {});
-                }
-            });
-            
-            // Слушатели изменения fullscreen
-            document.addEventListener('fullscreenchange', handleFullscreenChange);
-            document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
-            document.addEventListener('mozfullscreenchange', handleFullscreenChange);
-            document.addEventListener('MSFullscreenChange', handleFullscreenChange);
-            
-            if (muteBtn) {
-                muteBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    if (!audio) return;
-                    if (isMuted) {
-                        audio.muted = false;
-                        muteBtn.textContent = '🔊';
-                        isMuted = false;
-                        if (isOpen && audio.paused) {
-                            audio.play().catch(() => {});
-                        }
-                    } else {
-                        audio.muted = true;
-                        muteBtn.textContent = '🔇';
-                        isMuted = true;
-                    }
-                });
-            }
-            
-            // Обработка изменения размера и ориентации
-            let resizeTimer;
-            const handleResizeAndOrientation = () => {
-                clearTimeout(resizeTimer);
-                resizeTimer = setTimeout(() => {
-                    if (isOpen) {
-                        applyOpenTransform();
-                    }
-                }, 150);
+        } catch (err) {
+            console.error('Ошибка полноэкранного режима:', err);
+        }
+    };
+
+    // Обработчик изменения состояния fullscreen
+    const onFullscreenChange = () => {
+        isFullscreen = !!(document.fullscreenElement || 
+                         document.webkitFullscreenElement || 
+                         document.mozFullScreenElement ||
+                         document.msFullscreenElement);
+        fullscreenToggle.textContent = isFullscreen ? '✕' : '⛶';
+        
+        // Если вышли из фуллскрина, но карточка открыта — сбрасываем трансформацию
+        if (!isFullscreen && isOpen) {
+            card.style.transform = '';
+            applyOpenTransform();
+        }
+    };
+
+    // === ОТКРЫТИЕ ОТКРЫТКИ ===
+    const playMusic = () => {
+        if (!audio || isMuted) return;
+        audio.volume = 0.5;
+        audio.play().catch(() => {
+            const resume = () => {
+                if (!isMuted && isOpen) audio.play().catch(() => {});
+                document.removeEventListener('click', resume);
+                document.removeEventListener('touchstart', resume);
             };
-            
-            window.addEventListener('resize', handleResizeAndOrientation);
-            window.addEventListener('orientationchange', () => {
-                setTimeout(() => {
-                    if (isOpen) {
-                        applyOpenTransform();
-                    }
-                }, 100);
-            });
-            
-            // Проверка изображения обложки
-            const coverFront = document.querySelector('.cover-front');
-            if (coverFront) {
-                const testImg = new Image();
-                testImg.onerror = () => {
-                    coverFront.style.backgroundImage = 'linear-gradient(135deg, #8b2c2c, #5e1919)';
-                };
-                testImg.src = 'img/3_4.jpg';
-            }
-            
-            // Инициализация аудио
-            if (audio) {
-                audio.load();
-                audio.muted = false;
-            }
+            document.addEventListener('click', resume, { once: true });
+            document.addEventListener('touchstart', resume, { once: true });
         });
-    </script>
+    };
+
+    const calculateOffset = () => {
+        if (!card || isFullscreen) return 0;
+        const cardWidth = card.offsetWidth;
+        const screenWidth = window.innerWidth;
+        const padding = 10;
+        let offset = cardWidth / 2;
+        const maxOffset = screenWidth - cardWidth - padding;
+        if (offset > maxOffset && maxOffset > 20) offset = maxOffset;
+        return Math.max(offset, 10);
+    };
+
+    const applyOpenTransform = () => {
+        if (isOpen && !isFullscreen) {
+            card.style.transform = `translateX(${calculateOffset()}px)`;
+        } else if (isFullscreen || !isOpen) {
+            card.style.transform = 'none';
+        }
+    };
+
+    const openCard = () => {
+        if (isOpen) return;
+        isOpen = true;
+        document.body.classList.add('no-scroll');
+        card.classList.add('is-open');
+        setTimeout(applyOpenTransform, 10);
+        if (!isMuted) playMusic();
+        setTimeout(() => document.body.classList.remove('no-scroll'), 1600);
+    };
+
+    // === ОБРАБОТЧИКИ СОБЫТИЙ ===
+    
+    // Кнопка "Открыть"
+    openBtn?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openCard();
+    });
+    
+    // Клик по обложке
+    frontAssembly?.addEventListener('click', (e) => {
+        if (e.target === openBtn || openBtn?.contains(e.target)) return;
+        if (!isOpen) openCard();
+    });
+    
+    // 🔘 Кнопка ⛶ / ✕
+    fullscreenToggle?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleFullscreen();
+    });
+    
+    // Кнопка звука
+    muteBtn?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (!audio) return;
+        isMuted = !isMuted;
+        audio.muted = isMuted;
+        muteBtn.textContent = isMuted ? '🔇' : '🔊';
+        if (!isMuted && isOpen && audio.paused) audio.play().catch(() => {});
+    });
+    
+    // Escape для выхода из фуллскрина
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && isFullscreen) {
+            toggleFullscreen();
+        }
+    });
+    
+    // Слушатели fullscreenchange
+    ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange']
+        .forEach(evt => document.addEventListener(evt, onFullscreenChange));
+    
+    // Ресайз
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+            if (isOpen) applyOpenTransform();
+        }, 150);
+    });
+    
+    // Проверка изображения
+    const coverFront = document.querySelector('.cover-front');
+    if (coverFront) {
+        const img = new Image();
+        img.onerror = () => coverFront.style.backgroundImage = 'linear-gradient(135deg, #8b2c2c, #5e1919)';
+        img.src = 'img/3_4.jpg';
+    }
+    
+    // Аудио
+    if (audio) {
+        audio.load();
+        audio.muted = false;
+    }
+});
+</script>
 </body>
 </html>
