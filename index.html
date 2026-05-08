@@ -2,18 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-
-    <!-- iOS Web App Mode -->
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Открытка для Наташи">
-    <link rel="apple-touch-icon" href="img/3_4.jpg">
-
-    <!-- Полноэкранный режим и веб-приложение -->
-    <meta name="theme-color" content="#1e2a36">
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
     <title>3D Открытка | С Днём Рождения, Наташа</title>
     <style>
         :root {
@@ -21,15 +10,13 @@
             --card-height: 550px;
             --duration: 1.5s;
         }
-
         * {
             -webkit-tap-highlight-color: transparent;
             box-sizing: border-box;
         }
-
         body {
             margin: 0;
-            padding: 0px;
+            padding: 0;
             min-height: 100vh;
             display: flex;
             justify-content: center;
@@ -39,7 +26,12 @@
             overflow: hidden;
             perspective: 2000px;
         }
-
+        body.card-open {
+            overflow: auto;
+            align-items: flex-start;
+            padding-top: 20px;
+            padding-bottom: 20px;
+        }
         .scene {
             position: relative;
             width: var(--card-width);
@@ -47,8 +39,8 @@
             transform-style: preserve-3d;
             flex-shrink: 0;
             transition: all 0.3s ease;
+            margin: 0 auto;
         }
-
         .card {
             position: relative;
             width: 100%;
@@ -57,8 +49,6 @@
             transition: transform var(--duration) cubic-bezier(0.25, 1, 0.5, 1);
             cursor: pointer;
         }
-
-        /* --- ЗАДНИЙ ПЛАН (Правая страница с фото) --- */
         .back-page {
             position: absolute;
             top: 0;
@@ -71,7 +61,6 @@
             overflow: hidden;
             background-color: #2c3e50;
         }
-
         .back-page img {
             width: 100%;
             height: 100%;
@@ -79,8 +68,6 @@
             object-position: center;
             display: block;
         }
-
-
         .back-page::before {
             content: '';
             position: absolute;
@@ -90,7 +77,6 @@
             pointer-events: none;
             z-index: 1;
         }
-
         .sound-btn {
             position: absolute;
             top: 12px;
@@ -111,12 +97,29 @@
             transition: transform 0.2s, background 0.2s;
             color: #fff;
         }
-
-        .sound-btn:active {
-            transform: scale(0.92);
+        .sound-btn:active { transform: scale(0.92); }
+        .fullscreen-btn {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            z-index: 30;
+            background: rgba(0,0,0,0.65);
+            backdrop-filter: blur(4px);
+            border: none;
+            border-radius: 40px;
+            width: 44px;
+            height: 44px;
+            cursor: pointer;
+            font-size: 22px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            transition: transform 0.2s, background 0.2s;
+            color: #fff;
+            font-family: sans-serif;
         }
-
-        /* --- ПЕРЕДНЯЯ ЧАСТЬ (Обложка + Левая страница) --- */
+        .fullscreen-btn:active { transform: scale(0.92); }
         .front-assembly {
             position: absolute;
             top: 0;
@@ -129,8 +132,6 @@
             z-index: 10;
             border-radius: 4px 12px 12px 4px;
         }
-
-        /* ОБЛОЖКА С ЦЕНТРИРОВАННЫМ ИЗОБРАЖЕНИЕМ */
         .cover-front {
             position: absolute;
             inset: 0;
@@ -140,7 +141,6 @@
             background-position: center center;
             background-repeat: no-repeat;
             background-color: #6a1b1b;
-            
             display: flex;
             flex-direction: column;
             justify-content: flex-end;
@@ -149,7 +149,6 @@
             box-shadow: inset 10px 0 20px rgba(0,0,0,0.5), 5px 5px 15px rgba(0,0,0,0.4);
             border-radius: 4px 12px 12px 4px;
         }
-        
         .cover-front::after {
             content: '';
             position: absolute;
@@ -161,7 +160,6 @@
             pointer-events: none;
             border-radius: 0 0 12px 4px;
         }
-
         .cover-back {
             position: absolute;
             inset: 0;
@@ -177,19 +175,11 @@
             border-radius: 12px 4px 4px 12px;
             overflow-y: auto;
         }
-
         .cover-back::-webkit-scrollbar {
             width: 5px;
         }
-        .cover-back::-webkit-scrollbar-track {
-            background: #f0e8da;
-            border-radius: 10px;
-        }
-        .cover-back::-webkit-scrollbar-thumb {
-            background: #b57c48;
-            border-radius: 10px;
-        }
-
+        .cover-back::-webkit-scrollbar-track { background: #f0e8da; border-radius: 10px; }
+        .cover-back::-webkit-scrollbar-thumb { background: #b57c48; border-radius: 10px; }
         .greeting-text {
             font-family: 'Georgia', 'Times New Roman', serif;
             font-size: 18px;
@@ -199,7 +189,6 @@
             text-align: left;
             word-break: break-word;
         }
-
         .btn-open {
             background: linear-gradient(135deg, #ffb347, #ff8c1a);
             color: #3b2a1f;
@@ -217,689 +206,275 @@
             z-index: 5;
             font-family: inherit;
         }
-
-        .btn-open:active {
-            transform: scale(0.94);
-        }
-
-        /* --- ОТКРЫТОЕ СОСТОЯНИЕ --- */
-        .card.is-open .front-assembly {
-            transform: rotateY(-180deg);
-            z-index: 5;
-        }
-
-        /* ===========================================
-           КОМПЬЮТЕРЫ (ВСЕГДА КНИЖНАЯ ОРИЕНТАЦИЯ)
-           =========================================== */
-        
+        .btn-open:active { transform: scale(0.94); }
+        .card.is-open .front-assembly { transform: rotateY(-180deg); z-index: 5; }
+        .card.is-open .cover-front .btn-open { display: none; }
+        /* Компьютеры */
         @media (min-width: 769px) {
-            :root {
-                --card-width: 420px;
-                --card-height: 580px;
-            }
-            
-            body {
-                padding: 30px;
-            }
-            
-            .cover-front {
-                background-size: cover;
-                background-position: center center;
-            }
-            
-            .btn-open {
-                padding: 16px 32px;
-                font-size: 19px;
-                margin-bottom: 40px;
-            }
-            
-            .greeting-text {
-                font-size: 18px;
-                line-height: 1.6;
-            }
-            
-            .cover-back {
-                padding: 25px 30px;
-            }
-
-            .card.is-open {
-                transform: translateX(50%);
-            }
+            :root { --card-width: 420px; --card-height: 580px; }
+            body { padding: 30px; overflow: hidden; }
+            body.card-open { overflow: visible; align-items: center; padding-top: 30px; }
+            .btn-open { padding: 16px 32px; font-size: 19px; margin-bottom: 40px; }
+            .greeting-text { font-size: 18px; line-height: 1.6; }
+            .cover-back { padding: 25px 30px; }
+            .card.is-open { transform: translateX(50%); }
         }
-
-        /* ===========================================
-           МОБИЛЬНЫЕ - ВЕРТИКАЛЬНАЯ ОРИЕНТАЦИЯ (КНИЖНАЯ)
-           =========================================== */
-        
-        @media (max-width: 768px) and (orientation: portrait) {
-            :root {
-                --card-width: 340px;
-                --card-height: 500px;
-            }
-            
-            body {
-                padding: 15px;
-            }
-            
-            .btn-open {
-                padding: 12px 26px;
-                font-size: 16px;
-                margin-bottom: 30px;
-            }
-            
-            .greeting-text {
-                font-size: 16px;
-            }
-            
-            .cover-back {
-                padding: 20px 20px;
-            }
-            
-            .sound-btn {
-                width: 42px;
-                height: 42px;
-                font-size: 20px;
-            }
-
-            .card.is-open {
-                transform: translateX(50%);
-            }
-        }
-        
-        @media (max-width: 480px) and (orientation: portrait) {
-            :root {
-                --card-width: 300px;
-                --card-height: 460px;
-            }
-            
-            body {
-                padding: 12px;
-            }
-            
-            .scene {
-                width: 100%;
-                max-width: var(--card-width);
-                height: auto;
-                aspect-ratio: 300 / 460;
-            }
-            
-            .card {
-                height: 100%;
-            }
-            
-            .btn-open {
-                padding: 10px 24px;
-                font-size: 15px;
-                margin-bottom: 28px;
-            }
-            
-            .greeting-text {
-                font-size: 15px;
-                line-height: 1.5;
-            }
-            
-            .cover-back {
-                padding: 18px 16px;
-            }
-            
-            .sound-btn {
-                width: 38px;
-                height: 38px;
-                font-size: 18px;
-            }
-
-            .card.is-open {
-                transform: translateX(50%);
-            }
-        }
-        
-        /* ===========================================
-           МОБИЛЬНЫЕ - ГОРИЗОНТАЛЬНАЯ ОРИЕНТАЦИЯ (АЛЬБОМНАЯ)
-           =========================================== */
-        
-        @media (max-width: 900px) and (orientation: landscape) {
-            :root {
-                --card-width: 380px;
-                --card-height: 260px;
-            }
-            
-            body {
-                padding: 10px;
-                align-items: center;
-                justify-content: center;
-            }
-            
-            .scene {
-                width: var(--card-width);
-                height: var(--card-height);
-            }
-
-            /* Меняем background на img с object-fit */
-            .back-page {
-                background: none;
-
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
-            
-            .back-page img {
-                width: 100%;
-                height: 100%;
-                object-fit: cover;
-                object-position: center;
-                display: block;
-            }
-
-            
-            .cover-front {
-                background-size: cover;
-                background-position: center center;
-            }
-            
-            .btn-open {
-                padding: 8px 18px;
-                font-size: 13px;
-                margin-bottom: 18px;
-            }
-            
-            .greeting-text {
-                font-size: 11px;
-                line-height: 1.4;
-            }
-            
-            .cover-back {
-                padding: 10px 14px;
-            }
-            
-            .sound-btn {
-                width: 32px;
-                height: 32px;
-                font-size: 16px;
-                top: 6px;
-                right: 6px;
-            }
-            
-            .card.is-open {
-                transform: translateX(50%);
-            }
-        }
-        
-        /* Маленькие телефоны в ландшафте */
-        @media (max-width: 650px) and (orientation: landscape) {
-            :root {
-                --card-width: 340px;
-                --card-height: 230px;
-            }
-            
-            .greeting-text {
-                font-size: 10px;
-                line-height: 1.35;
-            }
-            
-            .btn-open {
-                padding: 6px 16px;
-                font-size: 12px;
-                margin-bottom: 15px;
-            }
-            
-            .cover-back {
-                padding: 8px 12px;
-            }
-        }
-        
-        /* Планшеты в ландшафте */
-        @media (min-width: 768px) and (max-width: 1024px) and (orientation: landscape) {
-            :root {
-                --card-width: 420px;
-                --card-height: 300px;
-            }
-            
-            body {
-                padding: 20px;
-            }
-            
-            .greeting-text {
-                font-size: 13px;
-                line-height: 1.45;
-            }
-            
-            .btn-open {
-                padding: 10px 22px;
-                font-size: 14px;
-                margin-bottom: 22px;
-            }
-            
-            .cover-back {
-                padding: 15px 18px;
-            }
-
-            
-            .gif {
-                width: 100%;
-                height: 100%;
-
-            }
-            
-            .card.is-open {
-                transform: translateX(50%);
-            }
-        }
-
-        /* Предотвращение прокрутки во время анимации */
-        body.no-scroll {
-            overflow: hidden;
+        /* Тост-подсказка для iOS */
+        .ios-toast {
             position: fixed;
-            width: 100%;
-            height: 100%;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.85);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 40px;
+            font-size: 14px;
+            z-index: 10000;
+            white-space: nowrap;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-family: sans-serif;
         }
-
-        /* Скрываем кнопку "Открыть" при открытой открытке */
-        .card.is-open .cover-front .btn-open {
-            display: none;
-        }
-
-        /* ===== ИСПРАВЛЕННЫЙ ПОЛНОЭКРАННЫЙ РЕЖИМ ===== */
-
-        /* 1. Нативный Fullscreen API (Android Chrome и др.) */
-        :fullscreen .scene,
-        :-webkit-full-screen .scene,
-        :-moz-full-screen .scene,
-        :-ms-fullscreen .scene {
-            width: 100vw !important;
-            height: 100vh !important;
-            max-width: none !important;
-            display: flex !important;
-            justify-content: center !important;
-            align-items: center !important;
-            background: #1e2a36 !important;
-            perspective: 2000px !important; /* Сохраняем перспективу */
-        }
-
-        :fullscreen .card,
-        :-webkit-full-screen .card {
-            width: 100% !important;
-            height: 100% !important;
-            max-width: 900px !important; /* Ограничиваем ширину, чтобы не было слишком широко */
-            transform: none !important; /* Убираем сдвиг всей карточки */
-        }
-
-        /* Ключевой момент: принудительно разворачиваем части книги */
-        :fullscreen .front-assembly,
-        :-webkit-full-screen .front-assembly {
-            position: absolute !important;
-            left: 0 !important;
-            width: 50% !important;
-            height: 100% !important;
-            transform: rotateY(-180deg) !important; /* Левая часть всегда открыта */
-            transform-origin: left center !important;
-            z-index: 5 !important;
-        }
-
-        :fullscreen .back-page,
-        :-webkit-full-screen .back-page {
-            position: absolute !important;
-            right: 0 !important;
-            left: auto !important;
-            width: 50% !important;
-            height: 100% !important;
-            z-index: 1 !important;
-        }
-
-        /* Стили для текста внутри левой части */
-        :fullscreen .cover-back,
-        :-webkit-full-screen .cover-back {
-            position: absolute !important;
-            inset: 0 !important;
-            width: 100% !important;
-            height: 100% !important;
-            border-radius: 0 !important;
-            padding: 20px !important;
-            overflow-y: auto !important;
-            display: flex !important;
-            flex-direction: column !important;
-            justify-content: center !important;
-        }
-
-        :fullscreen .greeting-text,
-        :-webkit-full-screen .greeting-text {
-            font-size: clamp(14px, 2.5vw, 22px) !important;
-            line-height: 1.6 !important;
-            text-align: left !important;
-        }
-
-        /* 2. Псевдо-полноэкранный режим (для iOS Safari, где API не скрывает строку) */
-        body.fake-fullscreen .scene {
-            width: 100vw !important;
-            height: 100vh !important;
-            max-width: none !important;
-            display: flex !important;
-            justify-content: center !important;
-            align-items: center !important;
-        }
-
-        body.fake-fullscreen .card {
-            width: 100% !important;
-            height: 100% !important;
-            max-width: 900px !important;
-            transform: none !important;
-        }
-
-        body.fake-fullscreen .front-assembly {
-            position: absolute !important;
-            left: 0 !important;
-            width: 50% !important;
-            height: 100% !important;
-            transform: rotateY(-180deg) !important;
-            transform-origin: left center !important;
-            z-index: 5 !important;
-        }
-
-        body.fake-fullscreen .back-page {
-            position: absolute !important;
-            right: 0 !important;
-            left: auto !important;
-            width: 50% !important;
-            height: 100% !important;
-            z-index: 1 !important;
-        }
-
-        body.fake-fullscreen .cover-back {
-            position: absolute !important;
-            inset: 0 !important;
-            width: 100% !important;
-            height: 100% !important;
-            border-radius: 0 !important;
-            padding: 20px !important;
-            overflow-y: auto !important;
-            display: flex !important;
-            flex-direction: column !important;
-            justify-content: center !important;
-        }
-
-        body.fake-fullscreen .greeting-text {
-            font-size: clamp(14px, 2.5vw, 22px) !important;
-            line-height: 1.6 !important;
-        }
-
-        /* Адаптация для очень узких экранов в горизонтальной ориентации */
-        @media (max-height: 500px) and (orientation: landscape) {
-            :fullscreen .greeting-text,
-            body.fake-fullscreen .greeting-text {
-                font-size: 14px !important;
-                padding: 10px !important;
-            }
-            
-            :fullscreen .cover-back,
-            body.fake-fullscreen .cover-back {
-                padding: 10px !important;
-            }
-        }
+        .ios-toast.show { opacity: 1; }
     </style>
 </head>
 <body>
-
     <audio id="bg-music" loop preload="auto">
         <source src="audio/Irina_Allegrova_-_S_dnjom_rozhdeniya_62687889_[cut_26sec].mp3" type="audio/mpeg">
     </audio>
-
-    <div class="scene">
-        <!-- Кнопка полноэкранного режима -->
-        <button class="fullscreen-toggle" id="fullscreen-toggle" aria-label="Полноэкранный режим">⛶</button>
+    <div class="scene" id="scene">
         <div class="card" id="card">
-            
             <div class="back-page">
                 <img class="gif" src="video/gif_3.gif" alt="Поздравление">
                 <button class="sound-btn" id="mute-btn" title="Вкл/Выкл звук">🔊</button>
             </div>
-
             <div class="front-assembly" id="front-assembly">
-                
                 <div class="cover-front">
                     <button class="btn-open" id="open-btn">✨ Открыть ✨</button> 
                 </div>
-
                 <div class="cover-back">
                     <p class="greeting-text">
                         Наташа, от всей души поздравляю тебя с Днём Рождения! 🥳🎉<br><br>
                         Этот день – особенный, наполненный светом, теплом и самыми искренними пожеланиями. 
                         Пусть этот день станет началом нового, прекрасного года жизни, полного счастливых моментов, открытий и успехов.<br>
-
                         Желаю тебе безграничного счастья, которое согревает душу и дарит ощущение полноты жизни. 
                         Крепкого здоровья, чтобы сил хватало на все начинания и грандиозные планы. 
                         Пусть каждый день будет озарён радостью, а улыбка не сходит с твоего лица.<br>
-
                         Чтобы рядом всегда были те, кто ценит, поддерживает и бережёт тебя. 
                         Все твои заветные желания и цели всегда реализуются с легкостью. 
                         Каждый шаг на этом пути пусть будет уверенным и приносящим удовлетворение.<br>
-
                         Этот год пусть подарит приятные сюрпризы, незабываемые путешествия и встречи с интересными людьми. 
                         Желаю гармонии, вдохновения и благополучия во всём.
                         <br><br>
                         С Днём Рождения! Пусть этот праздник будет таким же прекрасным и неповторимым, как ты сама! 🎂🥂💐❤️
                     </p>
                 </div>
-
             </div>
-
         </div>
     </div>
+    <button class="fullscreen-btn" id="fullscreenBtn">⛶</button>
+    <div id="iosToast" class="ios-toast">👆 Потяните открытку вверх, чтобы скрыть панель браузера</div>
 
     <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const card = document.getElementById('card');
-        const openBtn = document.getElementById('open-btn');
-        const audio = document.getElementById('bg-music');
-        const muteBtn = document.getElementById('mute-btn');
-        const frontAssembly = document.getElementById('front-assembly');
-        const fullscreenToggle = document.getElementById('fullscreen-toggle');
-        const scene = document.querySelector('.scene');
-        
-        let isOpen = false;
-        let isMuted = false;
-        let isFullscreen = false;
-        let usingFakeFullscreen = false;
-
-        // === ОПРЕДЕЛЕНИЕ УСТРОЙСТВА И БРАУЗЕРА ===
-        const ua = navigator.userAgent || navigator.vendor || window.opera;
-        const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
-        const isSafari = /^((?!chrome|android).)*safari/i.test(ua);
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
-
-        // === ПОЛНОЭКРАННЫЙ РЕЖИМ: ГИБРИДНЫЙ ПОДХОД ===
-        const toggleFullscreen = async () => {
-            if (isFullscreen) {
-                // === ВЫХОД ИЗ ПОЛНОЭКРАННОГО РЕЖИМА ===
-                if (usingFakeFullscreen) {
-                    // Выход из псевдо-режима
-                    document.body.classList.remove('fake-fullscreen');
-                    document.body.style.position = '';
-                    document.documentElement.style.overflow = '';
-                    usingFakeFullscreen = false;
-                    isFullscreen = false;
-                    fullscreenToggle.textContent = '⛶';
-                    if (isOpen) applyOpenTransform();
-                } else {
-                    // Выход из нативного fullscreen
-                    try {
-                        if (document.exitFullscreen) await document.exitFullscreen();
-                        else if (document.webkitExitFullscreen) await document.webkitExitFullscreen();
-                        else if (document.mozCancelFullScreen) await document.mozCancelFullScreen();
-                        else if (document.msExitFullscreen) await document.msExitFullscreen();
-                    } catch(e) {}
-                    isFullscreen = false;
-                    fullscreenToggle.textContent = '⛶';
-                    if (isOpen) applyOpenTransform();
-                }
-            } else {
-                // === ВХОД В ПОЛНОЭКРАННЫЙ РЕЖИМ ===
-                
-                // Сначала пробуем нативный API (работает на Android/Chrome)
-                let nativeSuccess = false;
-                if (!isIOS && scene) {
-                    try {
-                        if (scene.requestFullscreen) {
-                            await scene.requestFullscreen();
-                            nativeSuccess = true;
-                        } else if (scene.webkitRequestFullscreen) {
-                            await scene.webkitRequestFullscreen();
-                            nativeSuccess = true;
-                        } else if (scene.mozRequestFullScreen) {
-                            await scene.mozRequestFullScreen();
-                            nativeSuccess = true;
-                        } else if (scene.msRequestFullscreen) {
-                            await scene.msRequestFullscreen();
-                            nativeSuccess = true;
-                        }
-                    } catch(e) {
-                        console.log('Native fullscreen failed:', e);
-                    }
-                }
-                
-                if (nativeSuccess) {
-                    // Нативный режим активирован
-                    isFullscreen = true;
-                    usingFakeFullscreen = false;
-                    fullscreenToggle.textContent = '✕';
-                } else {
-                    // Фоллбэк: псевдо-полноэкранный режим через CSS (для iOS)
-                    document.body.classList.add('fake-fullscreen');
-                    document.documentElement.style.overflow = 'hidden';
-                    isFullscreen = true;
-                    usingFakeFullscreen = true;
-                    fullscreenToggle.textContent = '✕';
-                    
-                    // Принудительно центрируем карточку
-                    if (isOpen) {
-                        card.style.transform = 'none';
-                    }
-                }
-            }
-        };
-
-        // === ОБРАБОТЧИК ИЗМЕНЕНИЯ FULLSCREEN ===
-        const onFullscreenChange = () => {
-            const fsElement = document.fullscreenElement || 
-                            document.webkitFullscreenElement || 
-                            document.mozFullScreenElement ||
-                            document.msFullscreenElement;
+        (function() {
+            const scene = document.getElementById('scene');
+            const card = document.getElementById('card');
+            const openBtn = document.getElementById('open-btn');
+            const audio = document.getElementById('bg-music');
+            const muteBtn = document.getElementById('mute-btn');
+            const frontAssembly = document.getElementById('front-assembly');
+            const fullscreenBtn = document.getElementById('fullscreenBtn');
+            const toast = document.getElementById('iosToast');
             
-            if (!fsElement && !usingFakeFullscreen) {
-                // Вышли из нативного фуллскрина
-                isFullscreen = false;
-                fullscreenToggle.textContent = '⛶';
-                if (isOpen) applyOpenTransform();
+            let isOpen = false;
+            let isMuted = false;
+            
+            // Определение iOS
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+            
+            // Функция пересчёта размера открытки под текущее окно (для мобильных)
+            function resizeCardToWindow() {
+                if (window.innerWidth >= 769) return;
+                const vw = window.innerWidth;
+                const vh = window.innerHeight;
+                const targetRatio = 550 / 400;
+                let newWidth, newHeight;
+                const isLandscape = vw > vh;
+                if (isLandscape) {
+                    newHeight = Math.min(vh * 0.85, 500);
+                    newWidth = newHeight / targetRatio;
+                    if (newWidth > vw * 0.85) {
+                        newWidth = vw * 0.85;
+                        newHeight = newWidth * targetRatio;
+                    }
+                } else {
+                    newHeight = Math.min(vh * 0.8, 550);
+                    newWidth = newHeight / targetRatio;
+                    if (newWidth > vw * 0.85) {
+                        newWidth = vw * 0.85;
+                        newHeight = newWidth * targetRatio;
+                    }
+                }
+                scene.style.width = newWidth + 'px';
+                scene.style.height = newHeight + 'px';
+                document.documentElement.style.setProperty('--card-width', newWidth + 'px');
+                document.documentElement.style.setProperty('--card-height', newHeight + 'px');
             }
-        };
-
-        // === ОТКРЫТИЕ ОТКРЫТКИ ===
-        const playMusic = () => {
-            if (!audio || isMuted) return;
-            audio.volume = 0.5;
-            audio.play().catch(() => {
-                const resume = () => {
-                    if (!isMuted && isOpen) audio.play().catch(() => {});
-                    document.removeEventListener('click', resume);
-                    document.removeEventListener('touchstart', resume);
-                };
-                document.addEventListener('click', resume, { once: true });
-                document.addEventListener('touchstart', resume, { once: true });
+            
+            function calculateOffset() {
+                if (!card) return 180;
+                const cardWidth = card.offsetWidth;
+                const screenWidth = window.innerWidth;
+                const padding = 10;
+                let offset = cardWidth / 2;
+                const maxOffset = screenWidth - cardWidth - padding;
+                if (offset > maxOffset && maxOffset > 20) offset = maxOffset;
+                return Math.max(offset, 10);
+            }
+            
+            function applyOpenTransform() {
+                if (isOpen && window.innerWidth < 769) {
+                    const offset = calculateOffset();
+                    card.style.transform = `translateX(${offset}px)`;
+                } else if (isOpen && window.innerWidth >= 769) {
+                    card.style.transform = `translateX(50%)`;
+                }
+            }
+            
+            function playMusic() {
+                if (!audio || isMuted) return;
+                audio.volume = 0.5;
+                const playPromise = audio.play();
+                if (playPromise !== undefined) {
+                    playPromise.catch(() => {
+                        const resumeAudio = () => {
+                            if (!isMuted && isOpen) audio.play().catch(()=>{});
+                            document.removeEventListener('click', resumeAudio);
+                            document.removeEventListener('touchstart', resumeAudio);
+                        };
+                        document.addEventListener('click', resumeAudio, { once: true });
+                        document.addEventListener('touchstart', resumeAudio, { once: true });
+                    });
+                }
+            }
+            
+            // Полноэкранный режим (работает на Android и настольных браузерах)
+            function toggleFullscreen() {
+                if (isIOS) {
+                    // На iOS показываем подсказку и пробуем скрыть панель скроллом
+                    toast.classList.add('show');
+                    setTimeout(() => toast.classList.remove('show'), 3000);
+                    window.scrollTo({ top: 1, behavior: 'smooth' });
+                    return;
+                }
+                const elem = document.documentElement;
+                if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+                    const requestMethod = elem.requestFullscreen || elem.webkitRequestFullscreen;
+                    if (requestMethod) {
+                        requestMethod.call(elem).catch(err => console.warn(err));
+                    }
+                } else {
+                    const exitMethod = document.exitFullscreen || document.webkitExitFullscreen;
+                    if (exitMethod) exitMethod.call(document);
+                }
+            }
+            
+            function onFullscreenChange() {
+                setTimeout(() => {
+                    resizeCardToWindow();
+                    if (isOpen) applyOpenTransform();
+                }, 100);
+            }
+            document.addEventListener('fullscreenchange', onFullscreenChange);
+            document.addEventListener('webkitfullscreenchange', onFullscreenChange);
+            
+            // Открытие открытки
+            function openCard() {
+                if (isOpen) return;
+                isOpen = true;
+                document.body.classList.add('card-open');
+                card.classList.add('is-open');
+                setTimeout(() => {
+                    if (window.innerWidth < 769) {
+                        const offset = calculateOffset();
+                        card.style.transform = `translateX(${offset}px)`;
+                    } else {
+                        card.style.transform = `translateX(50%)`;
+                    }
+                }, 10);
+                if (!isMuted) playMusic();
+                fullscreenBtn.style.display = 'flex';
+                // Попытка скрыть адресную строку (на Android помогает, на iOS частично)
+                setTimeout(() => window.scrollTo({ top: 1, behavior: 'smooth' }), 200);
+                // На iOS дополнительно через 1 секунду повторяем, чтобы закрепить
+                if (isIOS) {
+                    setTimeout(() => window.scrollTo({ top: 1, behavior: 'smooth' }), 1000);
+                }
+            }
+            
+            // Обработчики
+            if (openBtn) {
+                openBtn.addEventListener('click', (e) => { e.stopPropagation(); openCard(); });
+            }
+            if (frontAssembly) {
+                frontAssembly.addEventListener('click', (e) => {
+                    if (e.target === openBtn || openBtn?.contains(e.target)) return;
+                    if (!isOpen) openCard();
+                });
+            }
+            if (muteBtn) {
+                muteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (!audio) return;
+                    if (isMuted) {
+                        audio.muted = false;
+                        muteBtn.textContent = '🔊';
+                        isMuted = false;
+                        if (isOpen && audio.paused) audio.play().catch(()=>{});
+                    } else {
+                        audio.muted = true;
+                        muteBtn.textContent = '🔇';
+                        isMuted = true;
+                    }
+                });
+            }
+            if (fullscreenBtn) {
+                fullscreenBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    toggleFullscreen();
+                });
+            }
+            
+            let resizeTimer;
+            window.addEventListener('resize', () => {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(() => {
+                    resizeCardToWindow();
+                    if (isOpen) applyOpenTransform();
+                }, 150);
             });
-        };
-
-        const calculateOffset = () => {
-            if (!card || isFullscreen) return 0;
-            const cardWidth = card.offsetWidth;
-            const screenWidth = window.innerWidth;
-            const padding = 10;
-            let offset = cardWidth / 2;
-            const maxOffset = screenWidth - cardWidth - padding;
-            if (offset > maxOffset && maxOffset > 20) offset = maxOffset;
-            return Math.max(offset, 10);
-        };
-
-        const applyOpenTransform = () => {
-            if (isOpen && !isFullscreen) {
-                card.style.transform = `translateX(${calculateOffset()}px)`;
-            } else {
-                card.style.transform = 'none';
+            window.addEventListener('orientationchange', () => {
+                setTimeout(() => {
+                    resizeCardToWindow();
+                    if (isOpen) applyOpenTransform();
+                }, 100);
+            });
+            
+            // Проверка изображения обложки
+            const coverFront = document.querySelector('.cover-front');
+            if (coverFront) {
+                const testImg = new Image();
+                testImg.onerror = () => coverFront.style.backgroundImage = 'linear-gradient(135deg, #8b2c2c, #5e1919)';
+                testImg.src = 'img/3_4.jpg';
             }
-        };
-
-        const openCard = () => {
-            if (isOpen) return;
-            isOpen = true;
-            document.body.classList.add('no-scroll');
-            card.classList.add('is-open');
-            setTimeout(applyOpenTransform, 10);
-            if (!isMuted) playMusic();
-            setTimeout(() => document.body.classList.remove('no-scroll'), 1600);
-        };
-
-        // === ОБРАБОТЧИКИ СОБЫТИЙ ===
-        
-        openBtn?.addEventListener('click', (e) => {
-            e.stopPropagation();
-            openCard();
-        });
-        
-        frontAssembly?.addEventListener('click', (e) => {
-            if (e.target === openBtn || openBtn?.contains(e.target)) return;
-            if (!isOpen) openCard();
-        });
-        
-        // 🔘 Кнопка ⛶ / ✕
-        fullscreenToggle?.addEventListener('click', (e) => {
-            e.stopPropagation();
-            toggleFullscreen();
-        });
-        
-        // Кнопка звука
-        muteBtn?.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (!audio) return;
-            isMuted = !isMuted;
-            audio.muted = isMuted;
-            muteBtn.textContent = isMuted ? '🔇' : '🔊';
-            if (!isMuted && isOpen && audio.paused) audio.play().catch(() => {});
-        });
-        
-        // Escape для выхода
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && isFullscreen) {
-                toggleFullscreen();
+            if (audio) {
+                audio.load();
+                audio.muted = false;
             }
-        });
-        
-        // Слушатели fullscreenchange
-        ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange']
-            .forEach(evt => document.addEventListener(evt, onFullscreenChange));
-        
-        // Ресайз и ориентация
-        let resizeTimer;
-        const handleResize = () => {
-            clearTimeout(resizeTimer);
-            resizeTimer = setTimeout(() => {
-                if (isOpen) applyOpenTransform();
-            }, 150);
-        };
-        window.addEventListener('resize', handleResize);
-        window.addEventListener('orientationchange', handleResize);
-        
-        // Проверка изображения
-        const coverFront = document.querySelector('.cover-front');
-        if (coverFront) {
-            const img = new Image();
-            img.onerror = () => coverFront.style.backgroundImage = 'linear-gradient(135deg, #8b2c2c, #5e1919)';
-            img.src = 'img/3_4.jpg';
-        }
-        
-        // Аудио
-        if (audio) {
-            audio.load();
-            audio.muted = false;
-        }
-    });
+            resizeCardToWindow();
+        })();
     </script>
 </body>
 </html>
